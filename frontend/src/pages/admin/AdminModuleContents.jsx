@@ -21,6 +21,7 @@ import { useModal } from '../../contexts/ModalContext'
 import { Table, TableHeader, TableBody, TableRow, TableCell } from '../../components/ui/Table'
 import Badge from '../../components/ui/Badge'
 import RichTextEditor from '../../components/RichTextEditor'
+import { sortArray, getSortDirection } from '../../utils/tableSort'
 
 function AdminModuleContents() {
   const { id } = useParams()
@@ -28,6 +29,10 @@ function AdminModuleContents() {
   const { showAlert, showConfirm } = useModal()
   const [module, setModule] = useState(null)
   const [contents, setContents] = useState([])
+  const [filteredContents, setFilteredContents] = useState([])
+  const [searchQuery, setSearchQuery] = useState('')
+  const [sortField, setSortField] = useState(null)
+  const [sortDirection, setSortDirection] = useState('asc')
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingContent, setEditingContent] = useState(null)
@@ -44,11 +49,88 @@ function AdminModuleContents() {
       ])
       setModule(moduleRes.data)
       setContents(contentsRes.data)
+      setFilteredContents(contentsRes.data)
     } catch (error) {
       console.error('Error fetching data:', error)
     } finally {
       setLoading(false)
     }
+  }
+
+  // Filter and sort contents
+  useEffect(() => {
+    let result = [...contents]
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase()
+      result = result.filter((content) => {
+        return (
+          content.title?.toLowerCase().includes(query) ||
+          content.type?.toLowerCase().includes(query)
+        )
+      })
+    }
+
+    // Apply sorting (only if not searching, to avoid conflicts with drag & drop)
+    if (sortField && !searchQuery.trim()) {
+      result = sortArray(result, sortField, sortDirection)
+    }
+
+    setFilteredContents(result)
+  }, [searchQuery, contents, sortField, sortDirection])
+
+  const handleSort = (field) => {
+    if (searchQuery.trim()) {
+      // Don't allow sorting when searching
+      return
+    }
+    const newDirection = getSortDirection(sortDirection, sortField, field)
+    setSortField(field)
+    setSortDirection(newDirection)
+  }
+
+  const SortableHeader = ({ field, children, className = '' }) => {
+    const isActive = sortField === field
+    const isDisabled = searchQuery.trim() !== ''
+    return (
+      <TableCell
+        isHeader
+        className={`${className} ${isDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer select-none group'} transition-colors`}
+        onClick={(e) => {
+          if (!isDisabled) {
+            e.preventDefault()
+            e.stopPropagation()
+            handleSort(field)
+          }
+        }}
+        style={{ userSelect: 'none' }}
+      >
+        <div className="flex items-center gap-2">
+          <span>{children}</span>
+          {!isDisabled && (
+            <div className="flex items-center">
+              {isActive ? (
+                <svg
+                  className={`w-4 h-4 text-brand-600 dark:text-brand-400 ${
+                    sortDirection === 'asc' ? '' : 'rotate-180'
+                  } transition-transform`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-50 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                </svg>
+              )}
+            </div>
+          )}
+        </div>
+      </TableCell>
+    )
   }
 
   const handleDelete = async (contentId) => {
@@ -95,43 +177,64 @@ function AdminModuleContents() {
       return
     }
 
-    const oldIndex = contents.findIndex((item) => item.id === active.id)
-    const newIndex = contents.findIndex((item) => item.id === over.id)
+    // If searching, drag and drop only affects filtered view
+    // We need to update the full contents array based on filtered position
+    const oldIndex = filteredContents.findIndex((item) => item.id === active.id)
+    const newIndex = filteredContents.findIndex((item) => item.id === over.id)
 
-    const newContents = arrayMove(contents, oldIndex, newIndex)
-    
-    // Update order based on new position
-    const updatedContents = newContents.map((content, index) => ({
-      ...content,
-      order: index,
-    }))
+    if (oldIndex === -1 || newIndex === -1) return
 
-    // Optimistically update UI
-    setContents(updatedContents)
+    // Get the dragged item from full contents
+    const draggedItem = contents.find((item) => item.id === active.id)
+    if (!draggedItem) return
 
-    try {
-      // Update all orders in backend
-      await Promise.all(
-        updatedContents.map((content) =>
-          api.put(`/admin/modules/${id}/contents/${content.id}`, {
-            order: content.order,
-          })
-        )
-      )
+    // If not searching, use normal drag and drop
+    if (!searchQuery.trim()) {
+      const oldFullIndex = contents.findIndex((item) => item.id === active.id)
+      const newFullIndex = contents.findIndex((item) => item.id === over.id)
+      const newContents = arrayMove(contents, oldFullIndex, newFullIndex)
       
+      // Update order based on new position
+      const updatedContents = newContents.map((content, index) => ({
+        ...content,
+        order: index,
+      }))
+
+      // Optimistically update UI
+      setContents(updatedContents)
+      setFilteredContents(updatedContents)
+
+      try {
+        // Update all orders in backend
+        await Promise.all(
+          updatedContents.map((content) =>
+            api.put(`/admin/modules/${id}/contents/${content.id}`, {
+              order: content.order,
+            })
+          )
+        )
+        
+        showAlert({
+          type: 'success',
+          title: 'Success',
+          message: 'Order updated successfully',
+        })
+      } catch (error) {
+        console.error('Error updating order:', error)
+        // Revert on error
+        fetchData()
+        showAlert({
+          type: 'error',
+          title: 'Error',
+          message: 'Failed to update order. Please try again.',
+        })
+      }
+    } else {
+      // When searching, we can't reorder properly, so just refresh
       showAlert({
-        type: 'success',
-        title: 'Success',
-        message: 'Order updated successfully',
-      })
-    } catch (error) {
-      console.error('Error updating order:', error)
-      // Revert on error
-      fetchData()
-      showAlert({
-        type: 'error',
-        title: 'Error',
-        message: 'Failed to update order. Please try again.',
+        type: 'info',
+        title: 'Info',
+        message: 'Please clear search to reorder materials',
       })
     }
   }
@@ -157,30 +260,47 @@ function AdminModuleContents() {
   return (
     <div>
       {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
-        <div>
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <button
+              onClick={() => navigate('/admin/modules')}
+              className="mb-2 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+            >
+              ← Back to Modules
+            </button>
+            <h1 className="text-2xl font-bold text-gray-800 dark:text-white/90">
+              Learning Materials: {module?.title}
+            </h1>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Manage learning materials for this module
+            </p>
+          </div>
           <button
-            onClick={() => navigate('/admin/modules')}
-            className="mb-2 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+            onClick={() => {
+              setEditingContent(null)
+              setShowForm(!showForm)
+            }}
+            className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors font-medium"
           >
-            ← Back to Modules
+            {showForm ? 'Cancel' : '+ Add New Material'}
           </button>
-          <h1 className="text-2xl font-bold text-gray-800 dark:text-white/90">
-            Learning Materials: {module?.title}
-          </h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Manage learning materials for this module
-          </p>
         </div>
-        <button
-          onClick={() => {
-            setEditingContent(null)
-            setShowForm(!showForm)
-          }}
-          className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors font-medium"
-        >
-          {showForm ? 'Cancel' : '+ Add New Material'}
-        </button>
+        {/* Search Bar */}
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
+            <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search materials by title or type..."
+            className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent relative z-0"
+          />
+        </div>
       </div>
 
       {/* Form */}
@@ -210,6 +330,10 @@ function AdminModuleContents() {
               No learning materials yet. Add your first material!
             </p>
           </div>
+        ) : filteredContents.length === 0 ? (
+          <div className="p-12 text-center">
+            <p className="text-gray-500 dark:text-gray-400">No materials found matching your search.</p>
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <Table>
@@ -218,12 +342,12 @@ function AdminModuleContents() {
                   <TableCell isHeader className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400 w-12">
                     Order
                   </TableCell>
-                  <TableCell isHeader className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
+                  <SortableHeader field="title" className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
                     Title
-                  </TableCell>
-                  <TableCell isHeader className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
+                  </SortableHeader>
+                  <SortableHeader field="type" className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
                     Type
-                  </TableCell>
+                  </SortableHeader>
                   <TableCell isHeader className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
                     Preview
                   </TableCell>
@@ -238,11 +362,11 @@ function AdminModuleContents() {
                 onDragEnd={handleDragEnd}
               >
                 <SortableContext
-                  items={contents.map((c) => c.id)}
+                  items={filteredContents.map((c) => c.id)}
                   strategy={verticalListSortingStrategy}
                 >
                   <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
-                    {contents.map((content, index) => (
+                    {filteredContents.map((content, index) => (
                       <SortableRow
                         key={content.id}
                         content={content}

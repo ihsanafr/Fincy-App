@@ -1,8 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import api from '../services/api'
 import { useModal } from '../contexts/ModalContext'
+import { useToast } from '../contexts/ToastContext'
 import Badge from '../components/ui/Badge'
 import CategoryModal from '../components/ui/CategoryModal'
+import Breadcrumbs from '../components/ui/Breadcrumbs'
+import { useBreadcrumbs } from '../hooks/useBreadcrumbs'
+import { usePullToRefresh } from '../hooks/usePullToRefresh'
 
 function FinanceToolsCategories() {
   const [categories, setCategories] = useState([])
@@ -11,6 +15,17 @@ function FinanceToolsCategories() {
   const [editingCategory, setEditingCategory] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { showAlert, showConfirm, showValidation } = useModal()
+  const { showToast } = useToast()
+  const breadcrumbs = useBreadcrumbs()
+
+  const handleRefresh = useCallback(() => {
+    if (!loading) {
+      fetchCategories()
+      showToast({ type: 'success', message: 'Categories refreshed!' })
+    }
+  }, [showToast, loading])
+
+  const pullToRefreshRef = usePullToRefresh(handleRefresh, { disabled: loading })
 
   useEffect(() => {
     fetchCategories()
@@ -132,7 +147,7 @@ function FinanceToolsCategories() {
   const defaultCategories = categories.filter(cat => cat.is_default)
 
   return (
-    <div>
+    <div ref={pullToRefreshRef}>
       {/* Category Modal */}
       <CategoryModal
         isOpen={showModal}
@@ -144,6 +159,9 @@ function FinanceToolsCategories() {
         onSubmit={handleSubmit}
         isLoading={isSubmitting}
       />
+
+      {/* Breadcrumbs */}
+      <Breadcrumbs items={breadcrumbs} />
 
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">

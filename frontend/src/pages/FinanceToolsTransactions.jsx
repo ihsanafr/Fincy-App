@@ -1,201 +1,23 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import api from '../services/api'
 import { useModal } from '../contexts/ModalContext'
-import { formatRupiah, formatRupiahInput, parseRupiahInput } from '../utils/currency'
+import { useToast } from '../contexts/ToastContext'
+import { formatRupiah } from '../utils/currency'
 import Badge from '../components/ui/Badge'
-
-function TransactionForm({ categories, editingTransaction, onSubmit, onCancel }) {
-  const [formData, setFormData] = useState({
-    category_id: editingTransaction?.category_id || '',
-    type: editingTransaction?.type || 'expense',
-    amount: editingTransaction?.amount || '',
-    description: editingTransaction?.description || '',
-    transaction_date: editingTransaction?.transaction_date || new Date().toISOString().split('T')[0],
-    notes: editingTransaction?.notes || '',
-  })
-
-  useEffect(() => {
-    if (editingTransaction) {
-      setFormData({
-        category_id: editingTransaction.category_id || '',
-        type: editingTransaction.type || 'expense',
-        amount: editingTransaction.amount || '',
-        description: editingTransaction.description || '',
-        transaction_date: editingTransaction.transaction_date || new Date().toISOString().split('T')[0],
-        notes: editingTransaction.notes || '',
-      })
-    } else {
-      setFormData({
-        category_id: '',
-        type: 'expense',
-        amount: '',
-        description: '',
-        transaction_date: new Date().toISOString().split('T')[0],
-        notes: '',
-      })
-    }
-  }, [editingTransaction])
-
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    onSubmit(formData)
-  }
-
-  const filteredCategories = categories.filter((cat) => {
-    if (formData.type === 'income') return cat.type === 'income' || cat.type === 'both'
-    if (formData.type === 'expense') return cat.type === 'expense' || cat.type === 'both'
-    return true
-  })
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-        {editingTransaction ? 'Edit Transaction' : 'Add New Transaction'}
-      </h2>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Type *
-          </label>
-          <div className="flex gap-4">
-            <label className="flex items-center cursor-pointer">
-              <input
-                type="radio"
-                value="income"
-                checked={formData.type === 'income'}
-                onChange={(e) => setFormData({ ...formData, type: e.target.value, category_id: '' })}
-                className="w-4 h-4 text-purple-600 border-gray-300 focus:ring-purple-500"
-              />
-              <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">Income</span>
-            </label>
-            <label className="flex items-center cursor-pointer">
-              <input
-                type="radio"
-                value="expense"
-                checked={formData.type === 'expense'}
-                onChange={(e) => setFormData({ ...formData, type: e.target.value, category_id: '' })}
-                className="w-4 h-4 text-red-600 border-gray-300 focus:ring-red-500"
-              />
-              <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">Expense</span>
-            </label>
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Category *
-          </label>
-          <select
-            value={formData.category_id}
-            onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
-            required
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-          >
-            <option value="">Select Category</option>
-            {filteredCategories.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.icon} {cat.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Amount (Rp) *
-          </label>
-          <div className="relative">
-            <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 font-medium">
-              Rp
-            </span>
-            <input
-              type="text"
-              value={formData.amount ? formatRupiahInput(formData.amount.toString()) : ''}
-              onChange={(e) => {
-                const parsed = parseRupiahInput(e.target.value)
-                setFormData({ ...formData, amount: parsed > 0 ? parsed.toString() : '' })
-              }}
-              onBlur={(e) => {
-                const parsed = parseRupiahInput(e.target.value)
-                if (parsed > 0) {
-                  setFormData({ ...formData, amount: parsed.toString() })
-                }
-              }}
-              required
-              className="w-full pl-12 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              placeholder="0"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Date *
-          </label>
-          <input
-            type="date"
-            value={formData.transaction_date}
-            onChange={(e) => setFormData({ ...formData, transaction_date: e.target.value })}
-            required
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-          />
-        </div>
-
-        <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Description *
-          </label>
-          <input
-            type="text"
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            required
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            placeholder="Enter description"
-          />
-        </div>
-
-        <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Notes (Optional)
-          </label>
-          <textarea
-            value={formData.notes}
-            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-            rows={3}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            placeholder="Additional notes..."
-          />
-        </div>
-      </div>
-
-      <div className="flex items-center justify-end gap-3 pt-4">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="px-6 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 transition-colors font-medium"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
-        >
-          {editingTransaction ? 'Update Transaction' : 'Create Transaction'}
-        </button>
-      </div>
-    </form>
-  )
-}
+import TransactionModal from '../components/ui/TransactionModal'
+import Breadcrumbs from '../components/ui/Breadcrumbs'
+import { useBreadcrumbs } from '../hooks/useBreadcrumbs'
+import { usePullToRefresh } from '../hooks/usePullToRefresh'
 
 function FinanceToolsTransactions() {
   const [transactions, setTransactions] = useState([])
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
-  const [showForm, setShowForm] = useState(false)
+  const [showModal, setShowModal] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [selectedTransactions, setSelectedTransactions] = useState([])
   const [filters, setFilters] = useState({
     type: '',
     category_id: '',
@@ -204,11 +26,22 @@ function FinanceToolsTransactions() {
   })
   const [searchParams, setSearchParams] = useSearchParams()
   const { showAlert, showConfirm, showValidation } = useModal()
+  const { showToast } = useToast()
+  const breadcrumbs = useBreadcrumbs()
+  
+  const handleRefresh = useCallback(() => {
+    if (!loading) {
+      fetchTransactions()
+      showToast({ type: 'success', message: 'Transactions refreshed!' })
+    }
+  }, [showToast, loading])
+
+  const pullToRefreshRef = usePullToRefresh(handleRefresh, { disabled: loading })
 
   useEffect(() => {
     const action = searchParams.get('action')
     if (action === 'add') {
-      setShowForm(true)
+      setShowModal(true)
     }
     fetchCategories()
   }, [])
@@ -275,6 +108,7 @@ function FinanceToolsTransactions() {
   }
 
   const handleSubmit = async (formData) => {
+    setIsSubmitting(true)
     try {
       // Ensure amount is a number
       const submitData = {
@@ -297,9 +131,10 @@ function FinanceToolsTransactions() {
           message: 'Transaction created successfully',
         })
       }
-      setShowForm(false)
+      setShowModal(false)
       setEditingTransaction(null)
       fetchTransactions()
+      return true
     } catch (error) {
       if (error.response?.status === 422) {
         showValidation({
@@ -313,17 +148,28 @@ function FinanceToolsTransactions() {
           message: error.response?.data?.message || 'Failed to save transaction',
         })
       }
+      return false
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
-  const filteredCategories = categories.filter((cat) => {
-    if (filters.type === 'income') return cat.type === 'income' || cat.type === 'both'
-    if (filters.type === 'expense') return cat.type === 'expense' || cat.type === 'both'
-    return true
-  })
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Transaction Modal */}
+      <TransactionModal
+        isOpen={showModal}
+        onClose={() => {
+          setShowModal(false)
+          setEditingTransaction(null)
+        }}
+        editingTransaction={editingTransaction}
+        categories={categories}
+        onSubmit={handleSubmit}
+        isLoading={isSubmitting}
+      />
+
       {/* Header */}
       <section className="bg-gradient-to-r from-purple-500 to-purple-600 dark:from-purple-700 dark:to-purple-800 text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -332,7 +178,9 @@ function FinanceToolsTransactions() {
         </div>
       </section>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div ref={pullToRefreshRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Breadcrumbs */}
+        <Breadcrumbs items={breadcrumbs} />
         {/* Filters & Add Button */}
         <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700 mb-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -377,35 +225,59 @@ function FinanceToolsTransactions() {
               />
             </div>
 
-            <button
-              onClick={() => {
-                setEditingTransaction(null)
-                setShowForm(!showForm)
-              }}
-              className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium flex items-center gap-2"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              {showForm ? 'Cancel' : 'Add Transaction'}
-            </button>
+            <div className="flex items-center gap-2">
+              {selectedTransactions.length > 0 && (
+                <button
+                  onClick={() => {
+                    showConfirm({
+                      title: 'Delete Selected Transactions',
+                      message: `Are you sure you want to delete ${selectedTransactions.length} transaction(s)? This action cannot be undone.`,
+                      type: 'danger',
+                      onConfirm: async () => {
+                        try {
+                          await Promise.all(
+                            selectedTransactions.map(id => api.delete(`/finance-tools/transactions/${id}`))
+                          )
+                          setSelectedTransactions([])
+                          fetchTransactions()
+                          showAlert({
+                            type: 'success',
+                            title: 'Success',
+                            message: `${selectedTransactions.length} transaction(s) deleted successfully`,
+                          })
+                        } catch (error) {
+                          showAlert({
+                            type: 'error',
+                            title: 'Error',
+                            message: error.response?.data?.message || 'Failed to delete transactions',
+                          })
+                        }
+                      },
+                    })
+                  }}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all font-medium flex items-center gap-2 shadow-lg"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Delete ({selectedTransactions.length})
+                </button>
+              )}
+              <button
+                onClick={() => {
+                  setEditingTransaction(null)
+                  setShowModal(true)
+                }}
+                className="px-6 py-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg hover:from-purple-700 hover:to-purple-800 transition-all font-medium flex items-center gap-2 shadow-lg"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Add Transaction
+              </button>
+            </div>
           </div>
         </div>
-
-        {/* Form */}
-        {showForm && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700 mb-6">
-            <TransactionForm
-              categories={filteredCategories}
-              editingTransaction={editingTransaction}
-              onSubmit={handleSubmit}
-              onCancel={() => {
-                setShowForm(false)
-                setEditingTransaction(null)
-              }}
-            />
-          </div>
-        )}
 
         {/* Transactions List */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -423,8 +295,8 @@ function FinanceToolsTransactions() {
               </div>
               <p className="text-gray-500 dark:text-gray-400 mb-4">No transactions found</p>
               <button
-                onClick={() => setShowForm(true)}
-                className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                onClick={() => setShowModal(true)}
+                className="px-6 py-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg hover:from-purple-700 hover:to-purple-800 transition-all font-medium shadow-lg"
               >
                 Add Your First Transaction
               </button>
@@ -434,6 +306,20 @@ function FinanceToolsTransactions() {
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead className="bg-gray-50 dark:bg-gray-800">
                   <tr>
+                    <th className="px-6 py-3 text-left">
+                      <input
+                        type="checkbox"
+                        checked={selectedTransactions.length === transactions.length && transactions.length > 0}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedTransactions(transactions.map(t => t.id))
+                          } else {
+                            setSelectedTransactions([])
+                          }
+                        }}
+                        className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                      />
+                    </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
                       Date
                     </th>
@@ -457,6 +343,20 @@ function FinanceToolsTransactions() {
                 <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
                   {transactions.map((transaction) => (
                     <tr key={transaction.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <input
+                          type="checkbox"
+                          checked={selectedTransactions.includes(transaction.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedTransactions([...selectedTransactions, transaction.id])
+                            } else {
+                              setSelectedTransactions(selectedTransactions.filter(id => id !== transaction.id))
+                            }
+                          }}
+                          className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                        />
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                         {new Date(transaction.transaction_date).toLocaleDateString('id-ID', {
                           day: 'numeric',
@@ -501,17 +401,23 @@ function FinanceToolsTransactions() {
                           <button
                             onClick={() => {
                               setEditingTransaction(transaction)
-                              setShowForm(true)
+                              setShowModal(true)
                             }}
-                            className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                            className="p-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                            title="Edit transaction"
                           >
-                            Edit
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
                           </button>
                           <button
                             onClick={() => handleDelete(transaction.id)}
-                            className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors"
+                            className="p-2 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
+                            title="Delete transaction"
                           >
-                            Delete
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
                           </button>
                         </div>
                       </td>

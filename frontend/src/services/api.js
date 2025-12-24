@@ -32,14 +32,27 @@ api.interceptors.request.use(
   }
 )
 
-// Handle 401 errors
+// Handle 401 errors and JSON parsing errors
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Response is already parsed by axios, just return it
+    return response
+  },
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('token')
       window.location.href = '/login'
     }
+    
+    // Handle JSON parsing errors - but don't throw if response exists
+    if (error.message && error.message.includes('JSON') && !error.response) {
+      console.error('JSON parsing error:', error)
+      // Only modify error if there's no response (network/parsing issue)
+      if (!error.response) {
+        error.message = 'Error parsing server response. Please try again.'
+      }
+    }
+    
     return Promise.reject(error)
   }
 )

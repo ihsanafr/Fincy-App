@@ -9,6 +9,7 @@ use App\Models\Subscription;
 use App\Models\Certificate;
 use App\Models\ModuleProgress;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class AdminDashboardController extends Controller
 {
@@ -86,32 +87,32 @@ class AdminDashboardController extends Controller
 
     public function notifications()
     {
-        // Get pending payments (last 24 hours)
+        // Pending payments: show ALL pending so admin tidak miss request lama
         $pendingPayments = Subscription::with('user')
             ->where('status', Subscription::STATUS_PENDING)
-            ->where('created_at', '>=', now()->subHours(24))
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($subscription) {
                 return [
                     'id' => 'payment_' . $subscription->id,
                     'type' => 'payment',
-                    'title' => 'New Payment Request',
+                    'title' => 'Payment Pending Approval',
                     'message' => $subscription->user->name . ' submitted a payment request',
                     'data' => [
                         'subscription_id' => $subscription->id,
                         'user_id' => $subscription->user_id,
                         'user_name' => $subscription->user->name,
                         'amount' => $subscription->amount,
+                        'status' => $subscription->status,
                     ],
                     'created_at' => $subscription->created_at->toISOString(),
                     'time_ago' => $subscription->created_at->diffForHumans(),
                 ];
             });
 
-        // Get new user registrations (last 24 hours)
+        // New user registrations (last 7 days untuk relevansi)
         $newUsers = User::where('role', User::ROLE_USER)
-            ->where('created_at', '>=', now()->subHours(24))
+            ->where('created_at', '>=', now()->subDays(7))
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($user) {
@@ -130,18 +131,78 @@ class AdminDashboardController extends Controller
                 ];
             });
 
-        // Combine and sort by created_at
+        // Combine and sort by created_at (max 20 items)
         $notifications = $pendingPayments->concat($newUsers)
             ->sortByDesc('created_at')
             ->values()
-            ->take(10);
-
-        // Count unread (all notifications are considered unread for simplicity)
-        $unreadCount = $notifications->count();
+            ->take(20);
 
         return response()->json([
             'notifications' => $notifications,
-            'unread_count' => $unreadCount,
+            // We do not persist read-state; keep badge cleared on load
+            'unread_count' => 0,
+        ]);
+    }
+
+    public function chartData()
+    {
+        $days = collect(range(6, 0))->map(function ($i) {
+            $date = Carbon::today()->subDays($i);
+            return [
+                'date' => $date,
+                'label' => $date->format('d M'),
+            ];
+        });
+
+        $registrations = $days->map(function ($day) {
+            $count = User::where('role', User::ROLE_USER)
+                ->whereDate('created_at', $day['date'])
+                ->count();
+
+            return array_merge($day, ['count' => $count]);
+        });
+
+        $completions = $days->map(function ($day) {
+            $count = ModuleProgress::whereNotNull('completed_at')
+                ->whereDate('completed_at', $day['date'])
+                ->count();
+
+            return array_merge($day, ['count' => $count]);
+        });
+
+        $payments = $days->map(function ($day) {
+            $approved = Subscription::where('status', Subscription::STATUS_APPROVED)
+                ->whereDate('created_at', $day['date']);
+
+            return array_merge($day, [
+                'count' => (clone $approved)->count(),
+                'amount' => (clone $approved)->sum('amount'),
+            ]);
+        });
+
+        $statusSummary = [
+            'pending' => Subscription::where('status', Subscription::STATUS_PENDING)->count(),
+            'approved' => Subscription::where('status', Subscription::STATUS_APPROVED)->count(),
+            'rejected' => Subscription::where('status', Subscription::STATUS_REJECTED)->count(),
+        ];
+
+        return response()->json([
+            'registrations' => $registrations,
+            'completions' => $completions,
+            'payments' => $payments,
+            'status_summary' => $statusSummary,
+        ]);
+    }
+
+    /**
+     * Clear notifications (stateless: just return empty + unread 0).
+     * Frontend will handle local state; we don't persist read-state yet.
+     */
+    public function clearNotifications()
+    {
+        return response()->json([
+            'notifications' => [],
+            'unread_count' => 0,
         ]);
     }
 }

@@ -17,6 +17,7 @@ class QuizQuestion extends Model
         'option_c',
         'option_d',
         'correct_answer',
+        'explanation',
         'order',
     ];
 

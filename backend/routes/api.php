@@ -10,6 +10,9 @@ use App\Http\Controllers\Api\Admin\AdminPaymentController;
 use App\Http\Controllers\Api\Admin\AdminUserController;
 use App\Http\Controllers\Api\Admin\AdminDashboardController;
 use App\Http\Controllers\Api\Admin\AdminContentController;
+use App\Http\Controllers\Api\AchievementController;
+use App\Http\Controllers\Api\ModuleRatingController;
+use App\Http\Controllers\Api\ModuleBookmarkController;
 use Illuminate\Support\Facades\Route;
 
 // Public routes
@@ -22,6 +25,9 @@ Route::get('/modules/{id}', [ModuleController::class, 'show']);
 
 // Public Profile (can be viewed without login) - using slug
 Route::get('/profile/{slug}', [ProfileController::class, 'getPublicProfile']);
+
+// Public Certificate (can be viewed without login) - using token
+Route::get('/certificate/public/{token}', [QuizController::class, 'getPublicCertificate']);
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
@@ -37,12 +43,29 @@ Route::middleware('auth:sanctum')->group(function () {
     // Learning Modules (User) - Actions that require login
     Route::post('/modules/{id}/complete', [ModuleController::class, 'markComplete']);
 
+    // Module Ratings
+    Route::get('/modules/{id}/ratings', [ModuleRatingController::class, 'getRatings']);
+    Route::post('/modules/{id}/ratings', [ModuleRatingController::class, 'submitRating']);
+    Route::delete('/modules/{id}/ratings', [ModuleRatingController::class, 'deleteRating']);
+
+    // Module Bookmarks
+    Route::post('/modules/{id}/bookmark', [ModuleBookmarkController::class, 'toggleBookmark']);
+    Route::get('/modules/{id}/bookmark', [ModuleBookmarkController::class, 'checkBookmark']);
+    Route::get('/bookmarks', [ModuleBookmarkController::class, 'getBookmarks']);
+
     // Quiz
     Route::get('/modules/{id}/quiz', [QuizController::class, 'getQuiz']);
     Route::post('/modules/{id}/quiz/submit', [QuizController::class, 'submitQuiz']);
     Route::get('/modules/{id}/certificate', [QuizController::class, 'getCertificate']);
+    Route::post('/modules/{id}/certificate/toggle-public', [QuizController::class, 'togglePublicShare']);
     Route::get('/modules/{id}/quiz/history', [QuizController::class, 'getModuleQuizHistory']);
     Route::get('/quiz/history', [QuizController::class, 'getQuizHistory']);
+    Route::get('/quiz/attempts/{id}', [QuizController::class, 'getQuizAttemptDetails']);
+
+    // Achievements
+    Route::get('/achievements', [AchievementController::class, 'getUserAchievements']);
+    Route::post('/achievements/check', [AchievementController::class, 'checkAndUnlockAchievements']);
+    Route::post('/achievements/update-streak', [AchievementController::class, 'updateLearningStreak']);
 
         // Finance Tools
         Route::get('/finance-tools/status', [FinanceToolsController::class, 'checkStatus']);
@@ -77,6 +100,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/dashboard/recent-users', [AdminDashboardController::class, 'recentUsers']);
         Route::get('/dashboard/recent-payments', [AdminDashboardController::class, 'recentPayments']);
         Route::get('/dashboard/notifications', [AdminDashboardController::class, 'notifications']);
+        Route::post('/dashboard/notifications/clear', [AdminDashboardController::class, 'clearNotifications']);
+        Route::get('/dashboard/chart-data', [AdminDashboardController::class, 'chartData']);
 
         // Modules
         Route::get('/modules', [AdminModuleController::class, 'index']);
@@ -100,11 +125,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/payments', [AdminPaymentController::class, 'index']);
         Route::put('/payments/{id}/approve', [AdminPaymentController::class, 'approve']);
         Route::put('/payments/{id}/reject', [AdminPaymentController::class, 'reject']);
+        Route::delete('/payments/{id}', [AdminPaymentController::class, 'destroy']);
 
         // Users
         Route::get('/users', [AdminUserController::class, 'index']);
         Route::get('/users/{id}', [AdminUserController::class, 'show']);
         Route::put('/users/{id}/role', [AdminUserController::class, 'updateRole']);
+        Route::delete('/users/{id}', [AdminUserController::class, 'destroy']);
     });
 });
 

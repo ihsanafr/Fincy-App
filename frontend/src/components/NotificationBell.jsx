@@ -8,6 +8,7 @@ function NotificationBell() {
   const [unreadCount, setUnreadCount] = useState(0)
   const [showDropdown, setShowDropdown] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [clearing, setClearing] = useState(false)
   const dropdownRef = useRef(null)
 
   useEffect(() => {
@@ -69,12 +70,36 @@ function NotificationBell() {
 
   const handleNotificationClick = (notification) => {
     setShowDropdown(false)
+    // Mark as read locally
+    setNotifications((prev) => prev.filter((item) => item.id !== notification.id))
+    setUnreadCount((prev) => (prev > 0 ? prev - 1 : 0))
+
     if (notification.type === 'payment') {
       // Navigate to payments page
       window.location.href = '/admin/payments'
     } else if (notification.type === 'user') {
       // Navigate to users page
       window.location.href = '/admin/users'
+    }
+  }
+
+  // When opening dropdown, mark all as read locally (clear badge)
+  useEffect(() => {
+    if (showDropdown) {
+      setUnreadCount(0)
+    }
+  }, [showDropdown])
+
+  const clearAll = async () => {
+    try {
+      setClearing(true)
+      await api.post('/admin/dashboard/notifications/clear')
+      setNotifications([])
+      setUnreadCount(0)
+    } catch (error) {
+      console.error('Error clearing notifications:', error)
+    } finally {
+      setClearing(false)
     }
   }
 
@@ -158,16 +183,16 @@ function NotificationBell() {
             )}
           </div>
 
-          {/* Footer */}
+          {/* Footer - only Clear */}
           {notifications.length > 0 && (
-            <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700">
-              <Link
-                to="/admin/payments"
-                onClick={() => setShowDropdown(false)}
-                className="text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium"
+            <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700 flex items-center justify-end gap-2">
+              <button
+                onClick={clearAll}
+                disabled={clearing}
+                className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 disabled:opacity-60"
               >
-                View all notifications →
-              </Link>
+                {clearing ? 'Clearing...' : 'Clear'}
+              </button>
             </div>
           )}
         </div>

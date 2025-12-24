@@ -1,6 +1,12 @@
 import { Link } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
+import { useLanguage } from '../contexts/LanguageContext'
+import { translations } from '../utils/translations'
 
 function Footer() {
+  const { user } = useAuth()
+  const { language } = useLanguage()
+  const tNav = translations[language].navbar
   return (
     <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -18,36 +24,40 @@ function Footer() {
           {/* Quick Links */}
           <div>
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider mb-4">
-              Quick Links
+              {language === 'id' ? 'Tautan Cepat' : 'Quick Links'}
             </h3>
             <ul className="space-y-3">
               <li>
                 <Link to="/learning-modules" className="text-sm text-gray-600 dark:text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
-                  Learning Modules
+                  {tNav.learningModules}
                 </Link>
               </li>
               <li>
                 <Link to="/finance-tools" className="text-sm text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
-                  Finance Tools
+                  {tNav.financeTools}
                 </Link>
               </li>
-              <li>
-                <Link to="/login" className="text-sm text-gray-600 dark:text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
-                  Login
-                </Link>
-              </li>
-              <li>
-                <Link to="/register" className="text-sm text-gray-600 dark:text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
-                  Register
-                </Link>
-              </li>
+              {!user && (
+                <>
+                  <li>
+                    <Link to="/login" className="text-sm text-gray-600 dark:text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
+                      {tNav.login}
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/register" className="text-sm text-gray-600 dark:text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
+                      {tNav.register}
+                    </Link>
+                  </li>
+                </>
+              )}
             </ul>
           </div>
 
           {/* Contact */}
           <div>
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider mb-4">
-              Contact
+              {language === 'id' ? 'Kontak' : 'Contact'}
             </h3>
             <ul className="space-y-3">
               <li className="text-sm text-gray-600 dark:text-gray-400">
@@ -68,10 +78,10 @@ function Footer() {
             </p>
             <div className="flex items-center gap-6">
               <Link to="#" className="text-sm text-gray-600 dark:text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
-                Privacy Policy
+                {language === 'id' ? 'Kebijakan Privasi' : 'Privacy Policy'}
               </Link>
               <Link to="#" className="text-sm text-gray-600 dark:text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
-                Terms of Service
+                {language === 'id' ? 'Syarat Layanan' : 'Terms of Service'}
               </Link>
             </div>
           </div>

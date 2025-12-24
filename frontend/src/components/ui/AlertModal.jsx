@@ -1,6 +1,29 @@
+import { useMemo } from 'react'
 import Modal from './Modal'
 
 function AlertModal({ isOpen, onClose, type = 'info', title, message, onConfirm }) {
+  // Safely sanitize message to prevent syntax errors
+  const safeMessage = useMemo(() => {
+    if (!message) return ''
+    try {
+      return String(message)
+        .replace(/[\\"]/g, '')
+        .replace(/syntax error.*/gi, '')
+        .substring(0, 500)
+        .trim()
+    } catch (e) {
+      return 'An error occurred'
+    }
+  }, [message])
+  
+  const safeTitle = useMemo(() => {
+    if (!title) return ''
+    try {
+      return String(title).replace(/[\\"]/g, '').substring(0, 100).trim()
+    } catch (e) {
+      return 'Error'
+    }
+  }, [title])
   const typeConfig = {
     success: {
       icon: (
@@ -64,15 +87,15 @@ function AlertModal({ isOpen, onClose, type = 'info', title, message, onConfirm 
         </div>
 
         {/* Title */}
-        {title && (
+        {safeTitle && (
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-            {title}
+            {safeTitle}
           </h3>
         )}
 
         {/* Message */}
         <p className="text-sm text-gray-600 dark:text-gray-300 mb-6">
-          {message}
+          {safeMessage}
         </p>
 
         {/* Button */}

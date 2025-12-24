@@ -1,17 +1,27 @@
 import { useEffect, useState, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { useLanguage } from '../contexts/LanguageContext'
 import { useModal } from '../contexts/ModalContext'
+import { translations } from '../utils/translations'
 import api from '../services/api'
 import Badge from '../components/ui/Badge'
+import { SkeletonModuleCard } from '../components/ui/Skeleton'
+import EmptyState from '../components/ui/EmptyState'
 
 function LearningModulesPage() {
   const { user } = useAuth()
+  const { language } = useLanguage()
   const { showConfirm } = useModal()
   const navigate = useNavigate()
   const [modules, setModules] = useState([])
+  const [filteredModules, setFilteredModules] = useState([])
   const [loading, setLoading] = useState(true)
   const [openDropdowns, setOpenDropdowns] = useState({})
+  const [searchQuery, setSearchQuery] = useState('')
+  const [sortBy, setSortBy] = useState('newest') // newest, oldest, title
+  const t = translations[language].learningModules
+  const tCommon = translations[language].common
 
   useEffect(() => {
     fetchModules()
@@ -32,12 +42,44 @@ function LearningModulesPage() {
     try {
       const response = await api.get('/modules')
       setModules(response.data)
+      setFilteredModules(response.data)
     } catch (error) {
       console.error('Error fetching modules:', error)
     } finally {
       setLoading(false)
     }
   }
+
+  // Filter and sort modules
+  useEffect(() => {
+    let filtered = [...modules]
+
+    // Search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase()
+      filtered = filtered.filter(
+        (module) =>
+          module.title?.toLowerCase().includes(query) ||
+          module.description?.toLowerCase().includes(query) ||
+          module.category?.toLowerCase().includes(query)
+      )
+    }
+
+    // Sort
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'oldest':
+          return new Date(a.created_at) - new Date(b.created_at)
+        case 'title':
+          return a.title.localeCompare(b.title)
+        case 'newest':
+        default:
+          return new Date(b.created_at) - new Date(a.created_at)
+      }
+    })
+
+    setFilteredModules(filtered)
+  }, [modules, searchQuery, sortBy])
 
   const toggleDropdown = (moduleId) => {
     setOpenDropdowns((prev) => {
@@ -54,11 +96,11 @@ function LearningModulesPage() {
     if (!user) {
       e.preventDefault()
       showConfirm({
-        title: 'Login Required',
-        message: 'You need to login first to start learning. Would you like to login now?',
+        title: t.loginRequired,
+        message: t.loginRequiredDesc,
         type: 'info',
-        confirmText: 'Login',
-        cancelText: 'Cancel',
+        confirmText: t.login,
+        cancelText: tCommon.cancel,
         onConfirm: () => {
           navigate('/login', { state: { returnTo: `/learning-modules/${moduleId}` } })
         },
@@ -68,11 +110,28 @@ function LearningModulesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-brand-50 dark:from-gray-900 dark:via-gray-800 dark:to-brand-900/20 flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600"></div>
-          <p className="mt-4 text-gray-500 dark:text-gray-400">Loading modules...</p>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-brand-50 dark:from-gray-900 dark:via-gray-800 dark:to-brand-900/20 overflow-x-hidden">
+        <section className="relative overflow-hidden bg-gradient-to-br from-brand-500 via-brand-600 to-purple-600 dark:from-brand-700 dark:via-brand-800 dark:to-purple-800">
+          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+            <div className="text-center">
+              <div className="inline-block px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-white text-sm font-medium mb-6">
+                📚 {t.badge}
+              </div>
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4">
+                {t.titleText}
+              </h1>
+            </div>
+          </div>
+        </section>
+        <section className="py-12 sm:py-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <SkeletonModuleCard key={i} />
+              ))}
+            </div>
+          </div>
+        </section>
       </div>
     )
   }
@@ -90,22 +149,71 @@ function LearningModulesPage() {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <div className="text-center">
             <div className="inline-block px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-white text-sm font-medium mb-6">
-              📚 Learning Center
+              📚 {t.badge}
             </div>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4">
-              Learning Modules
+              {t.titleText}
             </h1>
             <p className="text-xl text-white/90 max-w-2xl mx-auto">
-              Choose a module to start your financial literacy journey and earn certificates
+              {t.subtitleText}
             </p>
           </div>
+        </div>
+      </section>
+
+      {/* Search and Filter Section */}
+      <section className="py-8 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-y border-gray-200/50 dark:border-gray-700/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row gap-4">
+            {/* Search Bar */}
+            <div className="flex-1 relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
+                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search modules by title, description, or category..."
+                className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-all relative z-0"
+              />
+            </div>
+            {/* Sort Dropdown */}
+            <div className="sm:w-48">
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all"
+              >
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+                <option value="title">Title A-Z</option>
+              </select>
+            </div>
+          </div>
+          {searchQuery && (
+            <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
+              Found {filteredModules.length} module{filteredModules.length !== 1 ? 's' : ''}
+              {searchQuery && ` matching "${searchQuery}"`}
+            </div>
+          )}
         </div>
       </section>
 
       {/* Modules Grid */}
       <section className="py-12 sm:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {modules.length === 0 ? (
+          {filteredModules.length === 0 ? (
+            <EmptyState
+              icon="📚"
+              title={searchQuery ? "No modules found" : "No modules available"}
+              description={searchQuery ? `No modules match your search "${searchQuery}". Try a different search term.` : "There are no learning modules available at the moment. Check back later!"}
+              action={searchQuery ? () => setSearchQuery('') : null}
+              actionLabel={searchQuery ? "Clear Search" : null}
+            />
+          ) : modules.length === 0 ? (
             <div className="text-center py-16">
               <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-brand-100 to-purple-100 dark:from-brand-900/20 dark:to-purple-900/20 rounded-3xl flex items-center justify-center">
                 <svg className="w-12 h-12 text-brand-600 dark:text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -113,15 +221,15 @@ function LearningModulesPage() {
                 </svg>
               </div>
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                No modules available yet
+                {t.noModules}
               </h3>
               <p className="text-gray-500 dark:text-gray-400">
-                Check back later for new learning modules
+                {t.noModulesDesc}
               </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 items-start">
-              {modules.map((module, index) => (
+              {filteredModules.map((module, index) => (
                 <div
                   key={module.id}
                   className={`group bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all duration-500 border border-gray-100 dark:border-gray-700 relative dropdown-container animate-fadeInUp hover:-translate-y-2 overflow-hidden h-auto self-start ${
@@ -226,6 +334,38 @@ function LearningModulesPage() {
                       </div>
                     )}
 
+                    {/* Progress Bar */}
+                    {user && module.progress && (
+                      <div className="mb-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+                            {module.progress.is_completed ? 'Completed' : 'Progress'}
+                          </span>
+                          <span className="text-xs font-bold text-brand-600 dark:text-brand-400">
+                            {Math.round(module.progress.progress_percentage || 0)}%
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+                          <div
+                            className={`h-2 rounded-full transition-all duration-500 ${
+                              module.progress.is_completed
+                                ? 'bg-gradient-to-r from-green-500 to-green-600'
+                                : 'bg-gradient-to-r from-brand-500 to-brand-600'
+                            }`}
+                            style={{ width: `${module.progress.progress_percentage || 0}%` }}
+                          ></div>
+                        </div>
+                        {module.progress.has_certificate && (
+                          <div className="mt-2 flex items-center gap-1.5">
+                            <svg className="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                            <span className="text-xs font-medium text-yellow-600 dark:text-yellow-400">Certificate Earned</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 mb-6">
                       <div className="flex items-center gap-1.5">
                         <svg className="w-4 h-4 text-brand-600 dark:text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -246,12 +386,27 @@ function LearningModulesPage() {
                     <Link
                       to={`/learning-modules/${module.id}`}
                       onClick={(e) => handleStartLearning(module.id, e)}
-                      className="inline-flex items-center gap-2 w-full justify-center px-4 py-3 bg-gradient-to-r from-brand-600 to-brand-700 text-white rounded-xl hover:from-brand-700 hover:to-brand-800 transition-all duration-200 font-semibold shadow-lg group-hover:shadow-xl transform group-hover:scale-105"
+                      className={`inline-flex items-center gap-2 w-full justify-center px-4 py-3 rounded-xl transition-all duration-200 font-semibold shadow-lg group-hover:shadow-xl transform group-hover:scale-105 ${
+                        user && module.progress?.is_completed
+                          ? 'bg-gradient-to-r from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-800'
+                          : 'bg-gradient-to-r from-brand-600 to-brand-700 text-white hover:from-brand-700 hover:to-brand-800'
+                      }`}
                     >
-                      Start Learning
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                      </svg>
+                      {user && module.progress?.is_completed ? (
+                        <>
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          Review Module
+                        </>
+                      ) : (
+                        <>
+                          Start Learning
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                          </svg>
+                        </>
+                      )}
                     </Link>
                   </div>
                 </div>

@@ -51,5 +51,29 @@ class AdminUserController extends Controller
             'user' => $user,
         ]);
     }
+
+    public function destroy($id)
+    {
+        $user = User::findOrFail($id);
+
+        // Prevent deleting self
+        if ($user->id === auth()->id()) {
+            return response()->json(['message' => 'You cannot delete your own account'], 403);
+        }
+
+        // Optional: prevent removing last super admin
+        if ($user->role === User::ROLE_SUPER_ADMIN) {
+            $superAdminCount = User::where('role', User::ROLE_SUPER_ADMIN)->count();
+            if ($superAdminCount <= 1) {
+                return response()->json(['message' => 'Cannot delete the last super admin'], 403);
+            }
+        }
+
+        $user->delete();
+
+        return response()->json([
+            'message' => 'User deleted successfully',
+        ]);
+    }
 }
 

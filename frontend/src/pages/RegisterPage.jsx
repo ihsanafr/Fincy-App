@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useModal } from '../contexts/ModalContext'
+import PasswordStrength from '../components/ui/PasswordStrength'
 
 function RegisterPage() {
   const [name, setName] = useState('')
@@ -152,9 +153,7 @@ function RegisterPage() {
                 className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-all duration-200"
                 placeholder="••••••••"
               />
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Must be at least 8 characters
-              </p>
+              <PasswordStrength password={password} />
             </div>
 
             <div>

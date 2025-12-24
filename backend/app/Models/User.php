@@ -19,6 +19,9 @@ class User extends Authenticatable
         'profile_photo',
         'slug',
         'banner_color',
+        'learning_streak',
+        'last_activity_date',
+        'total_points',
     ];
 
     protected $hidden = [
@@ -56,12 +59,22 @@ class User extends Authenticatable
 
     public function subscription()
     {
-        return $this->hasOne(Subscription::class);
+        return $this->hasOne(Subscription::class)->latest();
+    }
+
+    public function subscriptions()
+    {
+        return $this->hasMany(Subscription::class)->orderBy('created_at', 'desc');
     }
 
     public function hasActiveSubscription()
     {
-        return $this->subscription && $this->subscription->status === Subscription::STATUS_APPROVED;
+        // Get the latest approved subscription
+        $approvedSubscription = $this->subscriptions()
+            ->where('status', Subscription::STATUS_APPROVED)
+            ->first();
+        
+        return $approvedSubscription !== null;
     }
 }
 

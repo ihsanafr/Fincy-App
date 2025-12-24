@@ -9,6 +9,7 @@ use App\Models\QuizAttempt;
 use App\Models\QuizAnswer;
 use App\Models\Certificate;
 use App\Models\ModuleProgress;
+use App\Http\Controllers\Api\AchievementController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -25,15 +26,31 @@ class QuizController extends Controller
             return response()->json(['message' => 'Quiz not found for this module'], 404);
         }
 
+        // Sanitize strings to prevent JSON encoding issues
+        $sanitizeString = function($str) {
+            if ($str === null || $str === false) return '';
+            // Convert to string and remove problematic characters
+            $str = (string)$str;
+            // Remove null bytes
+            $str = str_replace("\0", '', $str);
+            // Remove control characters except newlines and tabs
+            $str = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $str);
+            // Ensure valid UTF-8
+            if (!mb_check_encoding($str, 'UTF-8')) {
+                $str = mb_convert_encoding($str, 'UTF-8', 'UTF-8');
+            }
+            return $str;
+        };
+        
         // Return questions without correct answers
-        $questions = $module->quiz->questions->map(function($question) {
+        $questions = $module->quiz->questions->map(function($question) use ($sanitizeString) {
             return [
-                'id' => $question->id,
-                'question' => $question->question,
-                'option_a' => $question->option_a,
-                'option_b' => $question->option_b,
-                'option_c' => $question->option_c,
-                'option_d' => $question->option_d,
+                'id' => (int)$question->id,
+                'question' => $sanitizeString($question->question ?? ''),
+                'option_a' => $sanitizeString($question->option_a ?? ''),
+                'option_b' => $sanitizeString($question->option_b ?? ''),
+                'option_c' => $sanitizeString($question->option_c ?? ''),
+                'option_d' => $sanitizeString($question->option_d ?? ''),
             ];
         });
 
@@ -106,8 +123,19 @@ class QuizController extends Controller
                     [
                         'certificate_number' => Certificate::generateCertificateNumber(),
                         'issued_at' => now(),
+                        'public_share_token' => Certificate::generateShareToken(),
+                        'is_public' => true, // Sertifikat selalu public
                     ]
                 );
+                
+                // Pastikan sertifikat yang sudah ada juga public dan punya token
+                if (!$certificate->is_public || !$certificate->public_share_token) {
+                    $certificate->is_public = true;
+                    if (!$certificate->public_share_token) {
+                        $certificate->public_share_token = Certificate::generateShareToken();
+                    }
+                    $certificate->save();
+                }
 
                 // Mark module as completed when quiz is passed
                 $progress = ModuleProgress::updateOrCreate(
@@ -123,16 +151,87 @@ class QuizController extends Controller
 
             DB::commit();
 
-            return response()->json([
-                'score' => $score,
-                'total_questions' => $totalQuestions,
+            // Get detailed results with explanations
+            $detailedResults = [];
+            foreach ($request->answers as $answerData) {
+                $question = $questions->find($answerData['question_id']);
+                if (!$question) continue;
+
+                $isCorrect = $question->isCorrect($answerData['answer']);
+                
+                // Sanitize strings to prevent JSON encoding issues
+                $sanitizeString = function($str) {
+                    if ($str === null || $str === false) return '';
+                    // Convert to string and remove problematic characters
+                    $str = (string)$str;
+                    // Remove null bytes
+                    $str = str_replace("\0", '', $str);
+                    // Remove control characters except newlines and tabs
+                    $str = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $str);
+                    // Ensure valid UTF-8
+                    if (!mb_check_encoding($str, 'UTF-8')) {
+                        $str = mb_convert_encoding($str, 'UTF-8', 'UTF-8');
+                    }
+                    return $str;
+                };
+                
+                $detailedResults[] = [
+                    'question_id' => (int)$question->id,
+                    'question' => $sanitizeString($question->question ?? ''),
+                    'option_a' => $sanitizeString($question->option_a ?? ''),
+                    'option_b' => $sanitizeString($question->option_b ?? ''),
+                    'option_c' => $sanitizeString($question->option_c ?? ''),
+                    'option_d' => $sanitizeString($question->option_d ?? ''),
+                    'correct_answer' => $sanitizeString($question->correct_answer ?? ''),
+                    'user_answer' => $sanitizeString($answerData['answer'] ?? ''),
+                    'is_correct' => (bool)$isCorrect,
+                    'explanation' => $sanitizeString($question->explanation ?? ''),
+                ];
+            }
+
+            // Update learning streak and check achievements (outside transaction, don't fail quiz if this fails)
+            if ($passed) {
+                try {
+                    $achievementController = new AchievementController();
+                    $achievementController->updateLearningStreak();
+                    $achievementController->checkAndUnlockAchievements();
+                } catch (\Exception $e) {
+                    // Log error but don't fail the quiz submission
+                    \Log::error('Failed to update achievements after quiz submission: ' . $e->getMessage());
+                }
+            }
+
+            // Ensure all data is JSON-safe
+            $responseData = [
+                'score' => (int)$score,
+                'total_questions' => (int)$totalQuestions,
                 'percentage' => round(($score / $totalQuestions) * 100, 2),
-                'passed' => $passed,
+                'passed' => (bool)$passed,
                 'certificate' => $passed ? $certificate : null,
-            ]);
+                'attempt_id' => (int)$attempt->id,
+                'detailed_results' => $detailedResults,
+            ];
+            
+            // Validate JSON encoding before sending
+            $jsonTest = json_encode($responseData);
+            if ($jsonTest === false) {
+                \Log::error('JSON encoding failed: ' . json_last_error_msg());
+                \Log::error('Data: ' . print_r($responseData, true));
+                return response()->json([
+                    'message' => 'Error processing quiz results',
+                    'error' => 'Data encoding error'
+                ], 500);
+            }
+            
+            return response()->json($responseData);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['message' => 'Failed to submit quiz'], 500);
+            \Log::error('Quiz submission failed: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            return response()->json([
+                'message' => 'Failed to submit quiz',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
         }
     }
 
@@ -149,10 +248,26 @@ class QuizController extends Controller
             return response()->json(['message' => 'Certificate not found'], 404);
         }
 
+        // Generate public link if token doesn't exist
+        if (!$certificate->public_share_token) {
+            $certificate->public_share_token = Certificate::generateShareToken();
+            $certificate->save();
+        }
+
+        // Pastikan sertifikat public dan punya token
+        if (!$certificate->is_public || !$certificate->public_share_token) {
+            $certificate->is_public = true;
+            if (!$certificate->public_share_token) {
+                $certificate->public_share_token = Certificate::generateShareToken();
+            }
+            $certificate->save();
+        }
+        
         return response()->json([
             'certificate' => $certificate,
             'module' => $module,
             'user' => $user,
+            'public_link' => $certificate->generatePublicLink(),
         ]);
     }
 
@@ -216,6 +331,55 @@ class QuizController extends Controller
             });
 
         return response()->json($attempts);
+    }
+
+    public function togglePublicShare($moduleId)
+    {
+        $user = Auth::user();
+        $certificate = Certificate::where('user_id', $user->id)
+            ->where('module_id', $moduleId)
+            ->firstOrFail();
+
+        $certificate->is_public = !$certificate->is_public;
+        
+        // Generate token if making public and token doesn't exist
+        if ($certificate->is_public && !$certificate->public_share_token) {
+            $certificate->public_share_token = Certificate::generateShareToken();
+        }
+        
+        $certificate->save();
+
+        return response()->json([
+            'is_public' => $certificate->is_public,
+            'public_link' => $certificate->is_public ? $certificate->generatePublicLink() : null,
+        ]);
+    }
+
+    public function getPublicCertificate($token)
+    {
+        $certificate = Certificate::where('public_share_token', $token)
+            ->where('is_public', true)
+            ->with(['user', 'module'])
+            ->first();
+
+        if (!$certificate) {
+            return response()->json(['message' => 'Certificate not found or not publicly shared'], 404);
+        }
+
+        // Format user data with full profile photo URL
+        $user = $certificate->user;
+        $userData = $user->toArray();
+        if ($user->profile_photo) {
+            $userData['profile_photo'] = asset('storage/' . $user->profile_photo);
+        } else {
+            $userData['profile_photo'] = null;
+        }
+
+        return response()->json([
+            'certificate' => $certificate,
+            'module' => $certificate->module,
+            'user' => $userData,
+        ]);
     }
 }
 

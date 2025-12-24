@@ -130,6 +130,14 @@ class ProfileController extends Controller
             ],
             'portfolio' => [
                 'certificates' => $certificates->map(function ($cert) {
+                    // Pastikan sertifikat public dan punya token
+                    if (!$cert->is_public || !$cert->public_share_token) {
+                        $cert->is_public = true;
+                        if (!$cert->public_share_token) {
+                            $cert->public_share_token = \App\Models\Certificate::generateShareToken();
+                        }
+                        $cert->save();
+                    }
                     return [
                         'id' => $cert->id,
                         'module_id' => $cert->module_id,
@@ -137,6 +145,7 @@ class ProfileController extends Controller
                         'module_description' => $cert->module->description,
                         'certificate_number' => $cert->certificate_number,
                         'issued_at' => $cert->issued_at,
+                        'public_link' => $cert->generatePublicLink(),
                     ];
                 }),
                 'completed_modules' => $moduleProgress->map(function ($progress) {
@@ -203,6 +212,14 @@ class ProfileController extends Controller
             ],
             'portfolio' => [
                 'certificates' => $certificates->map(function ($cert) {
+                    // Pastikan sertifikat public dan punya token
+                    if (!$cert->is_public || !$cert->public_share_token) {
+                        $cert->is_public = true;
+                        if (!$cert->public_share_token) {
+                            $cert->public_share_token = \App\Models\Certificate::generateShareToken();
+                        }
+                        $cert->save();
+                    }
                     return [
                         'id' => $cert->id,
                         'module_id' => $cert->module_id,
@@ -210,6 +227,7 @@ class ProfileController extends Controller
                         'module_description' => $cert->module->description,
                         'certificate_number' => $cert->certificate_number,
                         'issued_at' => $cert->issued_at,
+                        'public_link' => $cert->generatePublicLink(),
                     ];
                 }),
                 'completed_modules' => $moduleProgress->map(function ($progress) {

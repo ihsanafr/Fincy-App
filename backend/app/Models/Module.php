@@ -37,5 +37,15 @@ class Module extends Model
     {
         return $this->hasMany(ModuleProgress::class);
     }
+
+    public function ratings()
+    {
+        return $this->hasMany(ModuleRating::class);
+    }
+
+    public function bookmarks()
+    {
+        return $this->hasMany(ModuleBookmark::class);
+    }
 }
 

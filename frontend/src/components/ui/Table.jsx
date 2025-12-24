@@ -18,13 +18,21 @@ const TableRow = ({ children, className = '' }) => {
   return <tr className={className}>{children}</tr>
 }
 
-const TableCell = ({ children, isHeader = false, className = '' }) => {
+const TableCell = ({ children, isHeader = false, className = '', onClick, ...props }) => {
   const CellTag = isHeader ? 'th' : 'td'
   const baseClasses = isHeader
     ? 'px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400'
     : 'px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white/90'
   
-  return <CellTag className={`${baseClasses} ${className}`}>{children}</CellTag>
+  return (
+    <CellTag 
+      className={`${baseClasses} ${className}`}
+      onClick={onClick}
+      {...props}
+    >
+      {children}
+    </CellTag>
+  )
 }
 
 export { Table, TableHeader, TableBody, TableRow, TableCell }

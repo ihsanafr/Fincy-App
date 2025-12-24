@@ -5,6 +5,7 @@ import { useSidebar } from '../contexts/SidebarContext'
 import { useTheme } from '../contexts/ThemeContext'
 import { useModal } from '../contexts/ModalContext'
 import Badge from '../components/ui/Badge'
+import UserGuide from '../components/UserGuide'
 
 function FinanceToolsLayout({ children }) {
   const { user, logout } = useAuth()
@@ -155,19 +156,26 @@ function FinanceToolsLayout({ children }) {
             {(isDesktop && (isExpanded || (isHovered && !isExpanded))) || (!isDesktop && isMobileOpen) ? (
               <Link 
                 to="/finance-tools/dashboard" 
-                className="text-xl font-bold text-purple-600"
+                className="flex items-center gap-2 text-xl font-bold text-gray-900 dark:text-white"
                 onClick={() => {
                   if (!isDesktop) {
                     toggleMobileSidebar()
                   }
                 }}
               >
-                Finance Tools
+                <img
+                  src="/logo-fincy-web.svg"
+                  alt="Fincy"
+                  className="w-6 h-6"
+                />
+                <span>Finance Tools</span>
               </Link>
             ) : (
-              <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold">F</span>
-              </div>
+              <img
+                src="/logo-fincy-web.svg"
+                alt="Fincy"
+                className="w-8 h-8"
+              />
             )}
             {!isDesktop && (
               <button
@@ -210,6 +218,11 @@ function FinanceToolsLayout({ children }) {
               ))}
             </ul>
           </nav>
+
+          {/* User Guide */}
+          {((isDesktop && (isExpanded || (isHovered && !isExpanded))) || (!isDesktop && isMobileOpen)) && (
+            <UserGuide type="finance" />
+          )}
         </div>
       </aside>
 

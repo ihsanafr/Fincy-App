@@ -14,6 +14,8 @@ class Certificate extends Model
         'module_id',
         'certificate_number',
         'issued_at',
+        'public_share_token',
+        'is_public',
     ];
 
     protected $casts = [
@@ -33,6 +35,22 @@ class Certificate extends Model
     public static function generateCertificateNumber()
     {
         return 'FINCY-' . date('Ymd') . '-' . strtoupper(uniqid());
+    }
+
+    public static function generateShareToken()
+    {
+        return bin2hex(random_bytes(16));
+    }
+
+    public function generatePublicLink()
+    {
+        if (!$this->public_share_token) {
+            $this->public_share_token = self::generateShareToken();
+            $this->save();
+        }
+        // Use frontend URL instead of backend URL
+        $frontendUrl = config('app.frontend_url', 'http://localhost:3000');
+        return "{$frontendUrl}/certificate/public/{$this->public_share_token}";
     }
 }
 

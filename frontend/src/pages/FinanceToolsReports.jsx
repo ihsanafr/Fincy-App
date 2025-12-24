@@ -1,7 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import api from '../services/api'
 import { useModal } from '../contexts/ModalContext'
+import { useToast } from '../contexts/ToastContext'
 import { formatRupiah } from '../utils/currency'
+import Breadcrumbs from '../components/ui/Breadcrumbs'
+import { useBreadcrumbs } from '../hooks/useBreadcrumbs'
+import { usePullToRefresh } from '../hooks/usePullToRefresh'
+import { exportToCSV, exportToPDF } from '../utils/export'
 
 function FinanceToolsReports() {
   const [reports, setReports] = useState(null)
@@ -11,6 +16,17 @@ function FinanceToolsReports() {
     end_date: new Date().toISOString().split('T')[0],
   })
   const { showAlert } = useModal()
+  const { showToast } = useToast()
+  const breadcrumbs = useBreadcrumbs()
+
+  const handleRefresh = useCallback(() => {
+    if (!loading) {
+      fetchReports()
+      showToast({ type: 'success', message: 'Reports refreshed!' })
+    }
+  }, [showToast, loading])
+
+  const pullToRefreshRef = usePullToRefresh(handleRefresh, { disabled: loading })
 
   useEffect(() => {
     fetchReports()
@@ -62,29 +78,104 @@ function FinanceToolsReports() {
   const totalIncome = reports.income_by_category?.reduce((sum, item) => sum + parseFloat(item.total), 0) || 0
 
   return (
-    <div>
+    <div ref={pullToRefreshRef}>
+      {/* Breadcrumbs */}
+      <Breadcrumbs items={breadcrumbs} />
+
       {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-800 dark:text-white/90">Financial Reports</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Analyze your income and expenses
           </p>
         </div>
-        <div className="flex items-center gap-4">
-          <input
-            type="date"
-            value={dateRange.start_date}
-            onChange={(e) => setDateRange({ ...dateRange, start_date: e.target.value })}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-          />
-          <span className="text-gray-500 dark:text-gray-400">to</span>
-          <input
-            type="date"
-            value={dateRange.end_date}
-            onChange={(e) => setDateRange({ ...dateRange, end_date: e.target.value })}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-          />
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-2">
+            <input
+              type="date"
+              value={dateRange.start_date}
+              onChange={(e) => setDateRange({ ...dateRange, start_date: e.target.value })}
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            />
+            <span className="text-gray-500 dark:text-gray-400">to</span>
+            <input
+              type="date"
+              value={dateRange.end_date}
+              onChange={(e) => setDateRange({ ...dateRange, end_date: e.target.value })}
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                const csvData = [
+                  ...(reports.expenses_by_category || []).map(item => ({
+                    Category: item.category?.name || 'Uncategorized',
+                    Type: 'Expense',
+                    Amount: item.total,
+                    Percentage: totalExpenses > 0 ? `${((parseFloat(item.total) / totalExpenses) * 100).toFixed(1)}%` : '0%'
+                  })),
+                  ...(reports.income_by_category || []).map(item => ({
+                    Category: item.category?.name || 'Uncategorized',
+                    Type: 'Income',
+                    Amount: item.total,
+                    Percentage: totalIncome > 0 ? `${((parseFloat(item.total) / totalIncome) * 100).toFixed(1)}%` : '0%'
+                  }))
+                ]
+                exportToCSV(csvData, 'financial_report')
+                showToast({ type: 'success', message: 'Report exported to CSV successfully!' })
+              }}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center gap-2 shadow-lg"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Export CSV
+            </button>
+            <button
+              onClick={() => {
+                const tableContent = `
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Category</th>
+                        <th>Type</th>
+                        <th>Amount</th>
+                        <th>Percentage</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${(reports.expenses_by_category || []).map(item => `
+                        <tr>
+                          <td>${item.category?.name || 'Uncategorized'}</td>
+                          <td>Expense</td>
+                          <td>${formatRupiah(item.total)}</td>
+                          <td>${totalExpenses > 0 ? ((parseFloat(item.total) / totalExpenses) * 100).toFixed(1) : 0}%</td>
+                        </tr>
+                      `).join('')}
+                      ${(reports.income_by_category || []).map(item => `
+                        <tr>
+                          <td>${item.category?.name || 'Uncategorized'}</td>
+                          <td>Income</td>
+                          <td>${formatRupiah(item.total)}</td>
+                          <td>${totalIncome > 0 ? ((parseFloat(item.total) / totalIncome) * 100).toFixed(1) : 0}%</td>
+                        </tr>
+                      `).join('')}
+                    </tbody>
+                  </table>
+                `
+                exportToPDF('Financial Report', tableContent, 'financial_report')
+                showToast({ type: 'success', message: 'Report opened for printing!' })
+              }}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center gap-2 shadow-lg"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+              </svg>
+              Export PDF
+            </button>
+          </div>
         </div>
       </div>
 

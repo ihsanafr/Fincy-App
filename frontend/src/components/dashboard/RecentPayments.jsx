@@ -44,12 +44,6 @@ const RecentPayments = ({ payments, onApprove, onReject }) => {
                 isHeader
                 className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
               >
-                Amount
-              </TableCell>
-              <TableCell
-                isHeader
-                className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-              >
                 Status
               </TableCell>
               <TableCell
@@ -57,12 +51,6 @@ const RecentPayments = ({ payments, onApprove, onReject }) => {
                 className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
               >
                 Date
-              </TableCell>
-              <TableCell
-                isHeader
-                className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-              >
-                Actions
               </TableCell>
             </TableRow>
           </TableHeader>
@@ -80,38 +68,17 @@ const RecentPayments = ({ payments, onApprove, onReject }) => {
                       </p>
                     </div>
                   </TableCell>
-                  <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                    {formatRupiah(payment.amount || 0)}
-                  </TableCell>
                   <TableCell className="py-3">
                     {getStatusBadge(payment.status)}
                   </TableCell>
                   <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
                     {new Date(payment.created_at).toLocaleDateString()}
                   </TableCell>
-                  <TableCell className="py-3">
-                    {payment.status === 'pending' && (
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => onApprove(payment.id)}
-                          className="px-3 py-1 text-xs font-medium text-white bg-green-600 rounded-lg hover:bg-green-700"
-                        >
-                          Approve
-                        </button>
-                        <button
-                          onClick={() => onReject(payment.id)}
-                          className="px-3 py-1 text-xs font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"
-                        >
-                          Reject
-                        </button>
-                      </div>
-                    )}
-                  </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan="5" className="py-8 text-center text-theme-sm text-gray-500">
+                <TableCell colSpan="3" className="py-8 text-center text-theme-sm text-gray-500">
                   No payments yet
                 </TableCell>
               </TableRow>

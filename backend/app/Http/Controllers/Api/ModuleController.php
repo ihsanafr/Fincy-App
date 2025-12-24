@@ -8,6 +8,8 @@ use App\Models\ModuleContent;
 use App\Models\ModuleProgress;
 use App\Models\Certificate;
 use App\Models\QuizAttempt;
+use App\Models\ModuleRating;
+use App\Models\ModuleBookmark;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -34,8 +36,48 @@ class ModuleController extends Controller
             ->orderBy('order')
             ->get();
 
-        $formattedModules = $modules->map(function($module) {
-            return $this->formatModule($module);
+        $user = Auth::user();
+        
+        $formattedModules = $modules->map(function($module) use ($user) {
+            $moduleArray = $this->formatModule($module);
+            
+            // Add progress information if user is authenticated
+            if ($user) {
+                $progress = ModuleProgress::where('user_id', $user->id)
+                    ->where('module_id', $module->id)
+                    ->first();
+                
+                $hasCertificate = Certificate::where('user_id', $user->id)
+                    ->where('module_id', $module->id)
+                    ->exists();
+                
+                $hasPassedQuiz = false;
+                if ($module->quiz) {
+                    $hasPassedQuiz = QuizAttempt::where('user_id', $user->id)
+                        ->where('quiz_id', $module->quiz->id)
+                        ->where('passed', true)
+                        ->exists();
+                }
+                
+                $isCompleted = ($progress && $progress->completed_at) || $hasCertificate || $hasPassedQuiz;
+                
+                // Calculate progress percentage based on contents viewed
+                $totalContents = $module->contents->count();
+                $viewedContents = 0; // This could be enhanced with a content_viewed table
+                $progressPercentage = $isCompleted ? 100 : ($totalContents > 0 ? ($viewedContents / $totalContents) * 100 : 0);
+                
+                $moduleArray['progress'] = [
+                    'is_completed' => $isCompleted,
+                    'has_certificate' => $hasCertificate,
+                    'has_passed_quiz' => $hasPassedQuiz,
+                    'completed_at' => $progress?->completed_at?->toISOString(),
+                    'progress_percentage' => $progressPercentage,
+                ];
+            } else {
+                $moduleArray['progress'] = null;
+            }
+            
+            return $moduleArray;
         });
 
         return response()->json($formattedModules);
@@ -109,6 +151,11 @@ class ModuleController extends Controller
 
         if (!$progress->completed_at) {
             $progress->update(['completed_at' => now()]);
+            
+            // Update learning streak and check achievements
+            $achievementController = new AchievementController();
+            $achievementController->updateLearningStreak();
+            $achievementController->checkAndUnlockAchievements();
         }
 
         return response()->json([

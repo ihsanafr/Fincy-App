@@ -2,8 +2,13 @@ import { useEffect, useState, useRef } from 'react'
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useModal } from '../contexts/ModalContext'
+import { useToast } from '../contexts/ToastContext'
 import api from '../services/api'
 import Badge from '../components/ui/Badge'
+import Breadcrumbs from '../components/ui/Breadcrumbs'
+import { useBreadcrumbs } from '../hooks/useBreadcrumbs'
+import ModuleRating from '../components/modules/ModuleRating'
+import SocialShare from '../components/sharing/SocialShare'
 
 function ModuleDetailPage() {
   const { id } = useParams()
@@ -18,11 +23,48 @@ function ModuleDetailPage() {
   const [activeContentId, setActiveContentId] = useState(null)
   const [quizHistory, setQuizHistory] = useState([])
   const [loadingHistory, setLoadingHistory] = useState(false)
+  const [isBookmarked, setIsBookmarked] = useState(false)
+  const [bookmarking, setBookmarking] = useState(false)
   const contentRefs = useRef({})
+  const breadcrumbs = useBreadcrumbs()
+  const { showToast } = useToast()
 
   useEffect(() => {
     fetchModule()
+    if (user) {
+      checkBookmark()
+    }
   }, [id, user])
+
+  const checkBookmark = async () => {
+    try {
+      const response = await api.get(`/modules/${id}/bookmark`)
+      setIsBookmarked(response.data.is_bookmarked)
+    } catch (error) {
+      console.error('Error checking bookmark:', error)
+    }
+  }
+
+  const handleToggleBookmark = async () => {
+    if (!user) {
+      showToast({ type: 'warning', message: 'Please login to bookmark modules' })
+      return
+    }
+
+    setBookmarking(true)
+    try {
+      const response = await api.post(`/modules/${id}/bookmark`)
+      setIsBookmarked(response.data.is_bookmarked)
+      showToast({
+        type: 'success',
+        message: response.data.is_bookmarked ? 'Module bookmarked!' : 'Bookmark removed',
+      })
+    } catch (error) {
+      showToast({ type: 'error', message: 'Failed to update bookmark' })
+    } finally {
+      setBookmarking(false)
+    }
+  }
 
   // Refresh module data when returning from quiz or certificate page
   useEffect(() => {
@@ -235,15 +277,15 @@ function ModuleDetailPage() {
           </div>
         )}
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Link
-            to="/learning-modules"
-            className="inline-flex items-center gap-2 text-brand-100 hover:text-white mb-6 transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Back to Modules
-          </Link>
+          <div className="mb-6">
+            <Breadcrumbs 
+              items={[
+                { path: '/', label: 'Home' },
+                { path: '/learning-modules', label: 'Learning Modules' },
+                { path: `/learning-modules/${id}`, label: module?.title || 'Module' }
+              ]}
+            />
+          </div>
           <div className="flex items-center gap-3 mb-4">
             <Badge color="info" variant="light" className="bg-white/20 text-white border-white/30">
               {module.category || 'General'}
@@ -568,6 +610,11 @@ function ModuleDetailPage() {
               </div>
               )
             })()}
+
+            {/* Ratings & Reviews Section */}
+            <div className="mt-8">
+              <ModuleRating moduleId={id} />
+            </div>
 
             {!user && (
               <div className="mt-8 bg-gradient-to-r from-brand-50 to-brand-100 dark:from-brand-900/20 dark:to-brand-800/20 rounded-xl p-6 shadow-lg border-2 border-brand-200 dark:border-brand-800 text-center">
