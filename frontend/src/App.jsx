@@ -3,8 +3,12 @@ import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { SidebarProvider } from './contexts/SidebarContext'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { ModalProvider } from './contexts/ModalContext'
+import { LanguageProvider } from './contexts/LanguageContext'
+import { ToastProvider } from './contexts/ToastContext'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
+import ScrollToTop from './components/ScrollToTop'
+import GlobalSearch from './components/ui/GlobalSearch'
 import AdminLayout from './layout/AdminLayout'
 import HomePage from './pages/HomePage'
 import LearningModulesPage from './pages/LearningModulesPage'
@@ -28,8 +32,12 @@ import PaymentPage from './pages/PaymentPage'
 import QuizPage from './pages/QuizPage'
 import QuizHistoryPage from './pages/QuizHistoryPage'
 import CertificatePage from './pages/CertificatePage'
+import PublicCertificatePage from './pages/PublicCertificatePage'
+import BookmarksPage from './pages/BookmarksPage'
 import ProfilePage from './pages/ProfilePage'
 import PublicProfilePage from './pages/PublicProfilePage'
+import UserGuidePage from './pages/UserGuidePage'
+import NotFoundPage from './pages/NotFoundPage'
 import ProtectedRoute from './components/ProtectedRoute'
 import AdminRoute from './components/AdminRoute'
 
@@ -41,11 +49,13 @@ function AppRoutes() {
   const isAuthRoute = location.pathname === '/login' || location.pathname === '/register'
   const isProtectedPage = location.pathname.startsWith('/payment') || 
                           location.pathname.includes('/quiz') || 
-                          location.pathname.includes('/certificate')
+                          (location.pathname.includes('/certificate') && !location.pathname.includes('/certificate/public'))
   const showNavbarAndFooter = !isAdminRoute && !isFinanceToolsDashboardRoute && !isAuthRoute && !isProtectedPage
 
   return (
     <>
+      <ScrollToTop />
+      <GlobalSearch />
       {showNavbarAndFooter && <Navbar />}
       <Routes>
       <Route path="/" element={<HomePage />} />
@@ -153,6 +163,20 @@ function AppRoutes() {
       />
       
       <Route
+        path="/certificate/public/:token"
+        element={<PublicCertificatePage />}
+      />
+      
+      <Route
+        path="/bookmarks"
+        element={
+          <ProtectedRoute>
+            <BookmarksPage />
+          </ProtectedRoute>
+        }
+      />
+      
+      <Route
         path="/profile"
         element={
           <ProtectedRoute>
@@ -238,6 +262,31 @@ function AppRoutes() {
           </AdminRoute>
         }
       />
+      <Route
+        path="/admin/guide"
+        element={
+          <AdminRoute>
+            <SidebarProvider>
+              <AdminLayout>
+                <UserGuidePage />
+              </AdminLayout>
+            </SidebarProvider>
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/finance-tools/guide"
+        element={
+          <ProtectedRoute>
+            <SidebarProvider>
+              <FinanceToolsLayout>
+                <UserGuidePage />
+              </FinanceToolsLayout>
+            </SidebarProvider>
+          </ProtectedRoute>
+        }
+      />
+      <Route path="*" element={<NotFoundPage />} />
       </Routes>
       {showNavbarAndFooter && <Footer />}
     </>
@@ -248,11 +297,15 @@ function App() {
   return (
     <Router>
       <ThemeProvider>
-        <AuthProvider>
-          <ModalProvider>
-            <AppRoutes />
-          </ModalProvider>
-        </AuthProvider>
+        <LanguageProvider>
+          <AuthProvider>
+            <ModalProvider>
+              <ToastProvider>
+                <AppRoutes />
+              </ToastProvider>
+            </ModalProvider>
+          </AuthProvider>
+        </LanguageProvider>
       </ThemeProvider>
     </Router>
   )

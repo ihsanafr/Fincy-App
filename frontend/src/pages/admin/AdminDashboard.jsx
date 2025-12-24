@@ -2,17 +2,22 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../../services/api'
 import { useModal } from '../../contexts/ModalContext'
+import Breadcrumbs from '../../components/ui/Breadcrumbs'
+import { useBreadcrumbs } from '../../hooks/useBreadcrumbs'
 import DashboardMetrics from '../../components/dashboard/DashboardMetrics'
 import RecentUsers from '../../components/dashboard/RecentUsers'
 import RecentPayments from '../../components/dashboard/RecentPayments'
 import QuickStats from '../../components/dashboard/QuickStats'
+import DashboardCharts from '../../components/dashboard/DashboardCharts'
 
 function AdminDashboard() {
   const { showAlert, showInput, showValidation } = useModal()
   const [statistics, setStatistics] = useState(null)
   const [recentUsers, setRecentUsers] = useState([])
   const [recentPayments, setRecentPayments] = useState([])
+  const [chartData, setChartData] = useState(null)
   const [loading, setLoading] = useState(true)
+  const breadcrumbs = useBreadcrumbs()
 
   useEffect(() => {
     fetchDashboardData()
@@ -20,15 +25,17 @@ function AdminDashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      const [statsRes, usersRes, paymentsRes] = await Promise.all([
+      const [statsRes, usersRes, paymentsRes, chartRes] = await Promise.all([
         api.get('/admin/dashboard/statistics'),
         api.get('/admin/dashboard/recent-users'),
         api.get('/admin/dashboard/recent-payments'),
+        api.get('/admin/dashboard/chart-data'),
       ])
 
       setStatistics(statsRes.data)
       setRecentUsers(usersRes.data)
       setRecentPayments(paymentsRes.data)
+      setChartData(chartRes.data)
     } catch (error) {
       console.error('Error fetching dashboard data:', error)
     } finally {
@@ -109,29 +116,43 @@ function AdminDashboard() {
   }
 
   return (
-    <div className="grid grid-cols-12 gap-4 md:gap-6">
-      {/* Metrics Cards */}
-      <div className="col-span-12 space-y-6 xl:col-span-7">
-        <DashboardMetrics statistics={statistics} />
+    <div className="space-y-6">
+      {/* Breadcrumbs */}
+      <Breadcrumbs items={breadcrumbs} />
+      {/* Metrics Cards - Full Width */}
+      <DashboardMetrics statistics={statistics} />
+
+      {/* Engagement Trend - Full Width, Larger */}
+      <DashboardCharts chartData={chartData} showEngagementOnly={true} />
+
+      {/* Payments Insight and Quick Stats - Side by Side */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 md:gap-6">
+        {/* Payments Insight */}
+        <div className="lg:col-span-1 h-full">
+          <DashboardCharts chartData={chartData} showPaymentsOnly={true} />
+        </div>
+
+        {/* Quick Stats Card */}
+        <div className="lg:col-span-1 h-full">
+          <QuickStats statistics={statistics} />
+        </div>
       </div>
 
-      {/* Quick Stats Card */}
-      <div className="col-span-12 xl:col-span-5">
-        <QuickStats statistics={statistics} />
-      </div>
+      {/* Recent Activity Tables */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 md:gap-6">
+        {/* Recent Users */}
+        <div className="lg:col-span-1">
+          <RecentUsers users={recentUsers} />
+        </div>
 
-      {/* Recent Users */}
-      <div className="col-span-12 xl:col-span-7">
-        <RecentUsers users={recentUsers} />
-      </div>
-
-      {/* Recent Payments */}
-      <div className="col-span-12 xl:col-span-5">
-        <RecentPayments
-          payments={recentPayments}
-          onApprove={handleApprovePayment}
-          onReject={handleRejectPayment}
-        />
+        {/* Recent Payments */}
+        <div className="lg:col-span-1">
+          <RecentPayments
+            payments={recentPayments}
+            onApprove={handleApprovePayment}
+            onReject={handleRejectPayment}
+          />
+        </div>
       </div>
     </div>
   )

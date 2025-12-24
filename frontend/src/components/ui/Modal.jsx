@@ -28,20 +28,20 @@ function Modal({ isOpen, onClose, title, children, size = 'md', showCloseButton 
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-300 ${
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-300 ease-out ${
         isAnimating ? 'opacity-100' : 'opacity-0'
       }`}
       onClick={onClose}
     >
       {/* Backdrop */}
-      <div className={`absolute inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-opacity duration-300 ${
+      <div className={`absolute inset-0 bg-gray-900/60 dark:bg-gray-900/80 backdrop-blur-sm transition-opacity duration-300 ease-out ${
         isAnimating ? 'opacity-100' : 'opacity-0'
       }`} />
       
       {/* Modal */}
       <div
-        className={`relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl ${sizeClasses[size]} w-full transform transition-all duration-300 ${
-          isAnimating ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-4'
+        className={`relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl ${sizeClasses[size]} w-full transform transition-all duration-300 ease-out ${
+          isAnimating ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-8'
         }`}
         onClick={(e) => e.stopPropagation()}
       >

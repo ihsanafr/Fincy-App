@@ -1,21 +1,104 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import api from '../services/api'
 import { useModal } from '../contexts/ModalContext'
-import { formatRupiah, formatRupiahInput, parseRupiahInput } from '../utils/currency'
+import { useToast } from '../contexts/ToastContext'
+import { formatRupiah } from '../utils/currency'
 import Badge from '../components/ui/Badge'
+import BudgetModal from '../components/ui/BudgetModal'
+import Breadcrumbs from '../components/ui/Breadcrumbs'
+import { useBreadcrumbs } from '../hooks/useBreadcrumbs'
+import { usePullToRefresh } from '../hooks/usePullToRefresh'
 
 function FinanceToolsBudgets() {
   const [budgets, setBudgets] = useState([])
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
-  const [showForm, setShowForm] = useState(false)
+  const [showModal, setShowModal] = useState(false)
   const [editingBudget, setEditingBudget] = useState(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [budgetSuggestions, setBudgetSuggestions] = useState([])
   const { showAlert, showConfirm, showValidation } = useModal()
+  const { showToast } = useToast()
+  const breadcrumbs = useBreadcrumbs()
+
+  const handleRefresh = useCallback(() => {
+    if (!loading) {
+      fetchBudgets()
+      fetchBudgetSuggestions()
+      showToast({ type: 'success', message: 'Budgets refreshed!' })
+    }
+  }, [showToast, loading])
+
+  const pullToRefreshRef = usePullToRefresh(handleRefresh, { disabled: loading })
 
   useEffect(() => {
     fetchCategories()
     fetchBudgets()
   }, [])
+
+  useEffect(() => {
+    if (budgets.length >= 0 && categories.length > 0) {
+      fetchBudgetSuggestions()
+    }
+  }, [budgets, categories])
+
+  const fetchBudgetSuggestions = async () => {
+    try {
+      // Get spending history by category
+      const transactionsResponse = await api.get('/finance-tools/transactions')
+      const transactions = transactionsResponse.data.data || transactionsResponse.data || []
+      
+      // Calculate average spending per category for last 3 months
+      const now = new Date()
+      const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, 1)
+      
+      const expenseTransactions = transactions.filter(t => 
+        t.type === 'expense' && 
+        new Date(t.transaction_date) >= threeMonthsAgo
+      )
+      
+      const categorySpending = {}
+      expenseTransactions.forEach(transaction => {
+        const categoryId = transaction.category_id
+        const categoryName = transaction.category?.name || 'Uncategorized'
+        
+        if (!categorySpending[categoryId]) {
+          categorySpending[categoryId] = {
+            category_id: categoryId,
+            category_name: categoryName,
+            total: 0,
+            count: 0,
+            color: transaction.category?.color || '#6366f1',
+            icon: transaction.category?.icon || '💰'
+          }
+        }
+        
+        categorySpending[categoryId].total += parseFloat(transaction.amount)
+        categorySpending[categoryId].count += 1
+      })
+      
+      // Get existing budgets
+      const existingBudgets = budgets.map(b => b.category_id)
+      
+      // Generate suggestions (average spending * 1.2 for buffer)
+      const suggestions = Object.values(categorySpending)
+        .filter(cat => !existingBudgets.includes(cat.category_id) && cat.count >= 3) // At least 3 transactions
+        .map(cat => ({
+          category_id: cat.category_id,
+          category_name: cat.category_name,
+          suggested_amount: Math.ceil((cat.total / 3) * 1.2), // Average per month * 1.2
+          average_spending: Math.ceil(cat.total / 3),
+          color: cat.color,
+          icon: cat.icon
+        }))
+        .sort((a, b) => b.suggested_amount - a.suggested_amount)
+        .slice(0, 3) // Top 3 suggestions
+      
+      setBudgetSuggestions(suggestions)
+    } catch (error) {
+      console.error('Error fetching budget suggestions:', error)
+    }
+  }
 
   const fetchBudgets = async () => {
     setLoading(true)
@@ -69,6 +152,7 @@ function FinanceToolsBudgets() {
   }
 
   const handleSubmit = async (formData) => {
+    setIsSubmitting(true)
     try {
       // Ensure amount is a number
       const submitData = {
@@ -91,9 +175,10 @@ function FinanceToolsBudgets() {
           message: 'Budget created successfully',
         })
       }
-      setShowForm(false)
+      setShowModal(false)
       setEditingBudget(null)
       fetchBudgets()
+      return true
     } catch (error) {
       if (error.response?.status === 422) {
         showValidation({
@@ -107,6 +192,9 @@ function FinanceToolsBudgets() {
           message: error.response?.data?.message || 'Failed to save budget',
         })
       }
+      return false
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -123,45 +211,112 @@ function FinanceToolsBudgets() {
 
   return (
     <div>
-      {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800 dark:text-white/90">Budgets</h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Manage your spending budgets by category
-          </p>
-        </div>
-        <button
-          onClick={() => {
-            setEditingBudget(null)
-            setShowForm(!showForm)
-          }}
-          className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium flex items-center gap-2"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          {showForm ? 'Cancel' : 'Add Budget'}
-        </button>
-      </div>
+      {/* Budget Modal */}
+      <BudgetModal
+        isOpen={showModal}
+        onClose={() => {
+          setShowModal(false)
+          setEditingBudget(null)
+        }}
+        editingBudget={editingBudget}
+        categories={categories}
+        onSubmit={handleSubmit}
+        isLoading={isSubmitting}
+      />
 
-      {/* Form */}
-      {showForm && (
-        <div className="mb-6 bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-          <BudgetForm
-            categories={categories}
-            editingBudget={editingBudget}
-            onSubmit={handleSubmit}
-            onCancel={() => {
-              setShowForm(false)
+      <div ref={pullToRefreshRef}>
+        {/* Breadcrumbs */}
+        <Breadcrumbs items={breadcrumbs} />
+
+        {/* Budget Suggestions */}
+        {budgetSuggestions.length > 0 && (
+          <div className="mb-6 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-xl p-6 border border-purple-200 dark:border-purple-800">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+                  💡 Budget Suggestions
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Based on your spending history
+                </p>
+              </div>
+              <button
+                onClick={() => setBudgetSuggestions([])}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {budgetSuggestions.map((suggestion, index) => (
+                <div
+                  key={index}
+                  className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-purple-200 dark:border-purple-700 hover:border-purple-400 dark:hover:border-purple-500 transition-colors cursor-pointer"
+                  onClick={() => {
+                    const category = categories.find(c => c.id === suggestion.category_id)
+                    if (category) {
+                      setEditingBudget({
+                        category_id: suggestion.category_id,
+                        amount: suggestion.suggested_amount,
+                      })
+                      setShowModal(true)
+                    }
+                  }}
+                >
+                  <div className="flex items-center gap-3 mb-3">
+                    <div
+                      className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-lg"
+                      style={{ backgroundColor: suggestion.color }}
+                    >
+                      {suggestion.icon}
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {suggestion.category_name}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Avg: {formatRupiah(suggestion.average_spending)}/month
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Suggested:</span>
+                    <span className="font-semibold text-purple-600 dark:text-purple-400">
+                      {formatRupiah(suggestion.suggested_amount)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Header */}
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800 dark:text-white/90">Budgets</h1>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Manage your spending budgets by category
+            </p>
+          </div>
+          <button
+            onClick={() => {
               setEditingBudget(null)
+              setShowModal(true)
             }}
-          />
+            className="px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg hover:from-purple-700 hover:to-purple-800 transition-all font-medium flex items-center gap-2 shadow-lg"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Add Budget
+          </button>
         </div>
-      )}
 
-      {/* Budgets List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Budgets List */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {budgets.length === 0 ? (
           <div className="col-span-full bg-white dark:bg-gray-800 rounded-xl p-12 text-center shadow-lg border border-gray-200 dark:border-gray-700">
             <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -171,8 +326,8 @@ function FinanceToolsBudgets() {
             </div>
             <p className="text-gray-500 dark:text-gray-400 mb-4">No budgets yet</p>
             <button
-              onClick={() => setShowForm(true)}
-              className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+              onClick={() => setShowModal(true)}
+              className="px-6 py-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg hover:from-purple-700 hover:to-purple-800 transition-all font-medium shadow-lg"
             >
               Create Your First Budget
             </button>
@@ -195,9 +350,10 @@ function FinanceToolsBudgets() {
                     <button
                       onClick={() => {
                         setEditingBudget(budget)
-                        setShowForm(true)
+                        setShowModal(true)
                       }}
-                      className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                      className="p-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                      title="Edit budget"
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -205,7 +361,8 @@ function FinanceToolsBudgets() {
                     </button>
                     <button
                       onClick={() => handleDelete(budget.id)}
-                      className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors"
+                      className="p-2 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
+                      title="Delete budget"
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -253,149 +410,9 @@ function FinanceToolsBudgets() {
             </div>
           ))
         )}
+        </div>
       </div>
     </div>
-  )
-}
-
-function BudgetForm({ categories, editingBudget, onSubmit, onCancel }) {
-  const [formData, setFormData] = useState({
-    category_id: editingBudget?.category_id || '',
-    amount: editingBudget?.amount || '',
-    start_date: editingBudget?.start_date || new Date().toISOString().split('T')[0],
-    end_date: editingBudget?.end_date || new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0],
-    period: editingBudget?.period || 'monthly',
-  })
-
-  useEffect(() => {
-    if (editingBudget) {
-      setFormData({
-        category_id: editingBudget.category_id || '',
-        amount: editingBudget.amount || '',
-        start_date: editingBudget.start_date || new Date().toISOString().split('T')[0],
-        end_date: editingBudget.end_date || new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0],
-        period: editingBudget.period || 'monthly',
-      })
-    }
-  }, [editingBudget])
-
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    onSubmit(formData)
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-        {editingBudget ? 'Edit Budget' : 'Add New Budget'}
-      </h2>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Category *
-          </label>
-          <select
-            value={formData.category_id}
-            onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
-            required
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-          >
-            <option value="">Select Category</option>
-            {categories.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.icon} {cat.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Amount (Rp) *
-          </label>
-          <div className="relative">
-            <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 font-medium">
-              Rp
-            </span>
-            <input
-              type="text"
-              value={formData.amount ? formatRupiahInput(formData.amount.toString()) : ''}
-              onChange={(e) => {
-                const parsed = parseRupiahInput(e.target.value)
-                setFormData({ ...formData, amount: parsed > 0 ? parsed.toString() : '' })
-              }}
-              onBlur={(e) => {
-                const parsed = parseRupiahInput(e.target.value)
-                if (parsed > 0) {
-                  setFormData({ ...formData, amount: parsed.toString() })
-                }
-              }}
-              required
-              className="w-full pl-12 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              placeholder="0"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Start Date *
-          </label>
-          <input
-            type="date"
-            value={formData.start_date}
-            onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-            required
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            End Date *
-          </label>
-          <input
-            type="date"
-            value={formData.end_date}
-            onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-            required
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-          />
-        </div>
-
-        <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Period
-          </label>
-          <select
-            value={formData.period}
-            onChange={(e) => setFormData({ ...formData, period: e.target.value })}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-          >
-            <option value="monthly">Monthly</option>
-            <option value="weekly">Weekly</option>
-            <option value="yearly">Yearly</option>
-          </select>
-        </div>
-      </div>
-
-      <div className="flex items-center justify-end gap-3 pt-4">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="px-6 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 transition-colors font-medium"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
-        >
-          {editingBudget ? 'Update Budget' : 'Create Budget'}
-        </button>
-      </div>
-    </form>
   )
 }
 

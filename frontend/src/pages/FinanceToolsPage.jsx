@@ -1,14 +1,19 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { useLanguage } from '../contexts/LanguageContext'
+import { translations } from '../utils/translations'
 import api from '../services/api'
 import Badge from '../components/ui/Badge'
 
 function FinanceToolsPage() {
   const { user } = useAuth()
+  const { language } = useLanguage()
   const navigate = useNavigate()
   const [subscriptionStatus, setSubscriptionStatus] = useState(null)
   const [loading, setLoading] = useState(true)
+  const t = translations[language].financeTools
+  const tCommon = translations[language].common
 
   useEffect(() => {
     const checkSubscription = async () => {
@@ -35,7 +40,7 @@ function FinanceToolsPage() {
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-purple-50/20 dark:from-gray-900 dark:via-gray-800 dark:to-purple-900/5 flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
-          <p className="mt-4 text-gray-500 dark:text-gray-400">Loading...</p>
+          <p className="mt-4 text-gray-500 dark:text-gray-400">{tCommon.loading}</p>
         </div>
       </div>
     )
@@ -53,19 +58,19 @@ function FinanceToolsPage() {
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
             <div className="text-center">
               <div className="inline-block px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-white text-sm font-medium mb-6">
-                💰 Finance Management
+                💰 {t.badge}
               </div>
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4">
-                Finance Tools
+                {t.title}
               </h1>
               <p className="text-xl text-white/90 max-w-2xl mx-auto mb-8">
-                Please login to access our comprehensive finance management tools
+                {t.loginRequiredDesc}
               </p>
               <Link
                 to="/login"
                 className="group inline-flex items-center gap-2 px-8 py-4 bg-white text-purple-600 rounded-xl font-medium hover:bg-purple-50 transition-all duration-200 shadow-lg transform hover:scale-[1.02] active:scale-[0.98]"
               >
-                Login to Continue
+                {t.loginToContinue}
                 <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
@@ -79,10 +84,10 @@ function FinanceToolsPage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
               <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-                Why Choose Finance Tools?
+                {t.whyChoose}
               </h2>
               <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-                Take control of your financial future with our comprehensive money management platform
+                {t.whyChooseDesc}
               </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -92,9 +97,9 @@ function FinanceToolsPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Track Expenses</h3>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{t.trackExpenses}</h3>
                 <p className="text-gray-600 dark:text-gray-300 text-sm">
-                  Monitor your spending habits and identify areas where you can save money
+                  {t.trackExpensesDesc}
                 </p>
               </div>
               <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-100 dark:border-gray-700">
@@ -103,9 +108,9 @@ function FinanceToolsPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Set Budgets</h3>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{t.setBudgets}</h3>
                 <p className="text-gray-600 dark:text-gray-300 text-sm">
-                  Create and manage budgets for different categories to achieve your financial goals
+                  {t.setBudgetsDesc}
                 </p>
               </div>
               <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-100 dark:border-gray-700">
@@ -114,9 +119,9 @@ function FinanceToolsPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Financial Reports</h3>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{t.financialReports}</h3>
                 <p className="text-gray-600 dark:text-gray-300 text-sm">
-                  Get detailed insights and visualizations of your financial data
+                  {t.financialReportsDesc}
                 </p>
               </div>
             </div>
@@ -125,7 +130,7 @@ function FinanceToolsPage() {
                 to="/login"
                 className="inline-flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors"
               >
-                Get Started - Login Now
+                {t.getStartedLogin}
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
@@ -164,15 +169,13 @@ function FinanceToolsPage() {
             <div className="text-center">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-white text-sm font-medium mb-6">
                 <span className={`w-2 h-2 ${isPending ? 'bg-yellow-300' : 'bg-red-300'} rounded-full inline-block animate-pulse`}></span>
-                {isPending ? 'Payment Processing' : 'Payment Rejected'}
+                {isPending ? t.paymentProcessing : t.paymentRejected}
               </div>
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4">
-                {isPending ? 'Pembayaran Sedang Diproses' : 'Pembayaran Ditolak'}
+                {isPending ? t.paymentProcessing : t.paymentRejected}
               </h1>
               <p className="text-xl text-white/90 max-w-2xl mx-auto">
-                {isPending 
-                  ? 'Bukti pembayaran kamu sudah kami terima. Silakan tunggu admin untuk melakukan approval.'
-                  : 'Pembayaran kamu ditolak oleh admin. Silakan submit ulang dengan bukti pembayaran yang valid.'}
+                {isPending ? t.paymentProcessingDesc : t.paymentRejectedDesc}
               </p>
             </div>
           </div>
@@ -193,10 +196,10 @@ function FinanceToolsPage() {
                 </div>
                 <div className="flex-1">
                   <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                    {isPending ? 'Menunggu Approval' : 'Pembayaran Ditolak'}
+                    {isPending ? t.waitingApproval : t.paymentRejected}
                   </h2>
                   <p className="text-gray-600 dark:text-gray-300 mt-1">
-                    Status langganan kamu saat ini:{' '}
+                    {t.subscriptionStatus}{' '}
                     <span className={`font-semibold ${isPending ? 'text-yellow-700 dark:text-yellow-300' : 'text-red-700 dark:text-red-300'}`}>
                       {isPending ? 'Pending' : 'Rejected'}
                     </span>
@@ -205,7 +208,7 @@ function FinanceToolsPage() {
                   {sub?.amount && (
                     <div className="mt-4 text-sm text-gray-600 dark:text-gray-300">
                       <div className="flex items-center justify-between py-2 border-t border-gray-100 dark:border-gray-700">
-                        <span>Nominal</span>
+                        <span>{t.amount}</span>
                         <span className="font-semibold text-gray-900 dark:text-white">
                           Rp {Number(sub.amount).toLocaleString('id-ID')}
                         </span>
@@ -219,7 +222,7 @@ function FinanceToolsPage() {
                       disabled
                       className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-300 rounded-xl font-medium cursor-not-allowed"
                     >
-                      {isPending ? 'Dashboard Terkunci (Menunggu Approval)' : 'Dashboard Terkunci (Pembayaran Ditolak)'}
+                      {isPending ? t.dashboardLocked : t.dashboardLockedRejected}
                     </button>
                     {isPending ? (
                       <button
@@ -227,7 +230,7 @@ function FinanceToolsPage() {
                         onClick={refreshStatus}
                         className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition-colors"
                       >
-                        Refresh Status
+                        {t.refreshStatus}
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v6h6M20 20v-6h-6M5 19a9 9 0 0014-7 9 9 0 00-14-7" />
                         </svg>
@@ -237,7 +240,7 @@ function FinanceToolsPage() {
                         to="/payment"
                         className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition-colors"
                       >
-                        Submit Ulang Pembayaran
+                        {t.resubmitPayment}
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                         </svg>
@@ -247,7 +250,7 @@ function FinanceToolsPage() {
                   {isRejected && sub?.notes && (
                     <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
                       <p className="text-sm text-red-800 dark:text-red-300">
-                        <span className="font-semibold">Catatan Admin:</span> {sub.notes}
+                        <span className="font-semibold">{t.adminNote}</span> {sub.notes}
                       </p>
                     </div>
                   )}
@@ -262,16 +265,16 @@ function FinanceToolsPage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
               <div className="inline-block px-5 py-2 bg-purple-100/80 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-sm font-medium mb-6">
-                Features
+                {t.features}
               </div>
               <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white mb-5 leading-tight">
-                What You'll{' '}
+                {t.whatYoullGet}{' '}
                 <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                  Get
+                  {t.get}
                 </span>
               </h2>
               <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-                Powerful tools designed to help you manage your finances effectively
+                {t.featuresDesc}
               </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-10">
@@ -284,10 +287,10 @@ function FinanceToolsPage() {
                     </svg>
                   </div>
                   <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3 text-center">
-                    Budget Tracking
+                    {t.budgetTracking}
                   </h3>
                   <p className="text-gray-600 dark:text-gray-300 text-center leading-relaxed">
-                    Track your income and expenses with ease. Get real-time insights into your spending patterns.
+                    {t.budgetTrackingDesc}
                   </p>
                 </div>
               </div>
@@ -300,10 +303,10 @@ function FinanceToolsPage() {
                     </svg>
                   </div>
                   <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3 text-center">
-                    Financial Reports
+                    {t.financialReportsTitle}
                   </h3>
                   <p className="text-gray-600 dark:text-gray-300 text-center leading-relaxed">
-                    Get detailed insights into your spending habits. Visualize your financial data with comprehensive analytics.
+                    {t.financialReportsDesc}
                   </p>
                 </div>
               </div>
@@ -316,10 +319,10 @@ function FinanceToolsPage() {
                     </svg>
                   </div>
                   <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3 text-center">
-                    Goal Setting
+                    {t.goalSetting}
                   </h3>
                   <p className="text-gray-600 dark:text-gray-300 text-center leading-relaxed">
-                    Set and achieve your financial goals. Track your progress and stay motivated on your journey.
+                    {t.goalSettingDesc}
                   </p>
                 </div>
               </div>
@@ -332,12 +335,10 @@ function FinanceToolsPage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
               <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-                Unlock Full Access
+                {t.unlockFullAccess}
               </h2>
               <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-                {isPending 
-                  ? 'Once your payment is approved, you\'ll have access to all premium finance management features'
-                  : 'Subscribe now to access all premium finance management features'}
+                {isPending ? t.unlockFullAccessDesc : t.unlockFullAccessDesc2}
               </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -349,9 +350,9 @@ function FinanceToolsPage() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Transaction Management</h3>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{t.transactionManagement}</h3>
                     <p className="text-gray-600 dark:text-gray-300">
-                      Record and categorize all your income and expenses with ease. Track every transaction in one place.
+                      {t.transactionManagementDesc}
                     </p>
                   </div>
                 </div>
@@ -364,9 +365,9 @@ function FinanceToolsPage() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Budget Planning</h3>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{t.budgetPlanning}</h3>
                     <p className="text-gray-600 dark:text-gray-300">
-                      Create custom budgets for different categories and track your progress towards financial goals.
+                      {t.budgetPlanningDesc}
                     </p>
                   </div>
                 </div>
@@ -379,9 +380,9 @@ function FinanceToolsPage() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Category Management</h3>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{t.categoryManagement}</h3>
                     <p className="text-gray-600 dark:text-gray-300">
-                      Organize your finances with custom categories. Create, edit, and manage categories that fit your lifestyle.
+                      {t.categoryManagementDesc}
                     </p>
                   </div>
                 </div>
@@ -394,9 +395,9 @@ function FinanceToolsPage() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Analytics & Reports</h3>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{t.analyticsReports}</h3>
                     <p className="text-gray-600 dark:text-gray-300">
-                      Get comprehensive insights with detailed reports and visual analytics of your financial data.
+                      {t.analyticsReportsDesc}
                     </p>
                   </div>
                 </div>
@@ -422,20 +423,20 @@ function FinanceToolsPage() {
             <div className="text-center">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-white text-sm font-medium mb-6">
                 <span className="w-2 h-2 bg-red-300 rounded-full inline-block"></span>
-                Payment Rejected
+                {t.paymentRejected}
               </div>
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4">
-                Pembayaran Ditolak
+                {t.paymentRejected}
               </h1>
               <p className="text-xl text-white/90 max-w-2xl mx-auto">
-                Silakan submit ulang bukti pembayaran. {sub?.notes ? `Catatan admin: ${sub.notes}` : ''}
+                {t.paymentRejectedDesc} {sub?.notes ? `${t.adminNote} ${sub.notes}` : ''}
               </p>
               <div className="mt-8">
                 <Link
                   to="/payment"
                   className="inline-flex items-center gap-2 px-8 py-4 bg-white text-purple-600 rounded-xl font-medium hover:bg-purple-50 transition-all duration-200 shadow-lg transform hover:scale-[1.02] active:scale-[0.98]"
                 >
-                  Submit Ulang Pembayaran
+                  {t.resubmitPayment}
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
@@ -461,25 +462,22 @@ function FinanceToolsPage() {
             <div className="text-center">
               <div className="inline-block px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-white text-sm font-medium mb-6">
                 <span className="w-2 h-2 bg-green-400 rounded-full inline-block mr-2 animate-pulse"></span>
-                Subscription Required
+                {t.subscriptionRequired}
               </div>
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4">
-                Finance{' '}
-                <span className="bg-gradient-to-r from-yellow-200 via-pink-200 to-purple-200 bg-clip-text text-transparent">
-                  Tools
-                </span>
+                {t.title}
               </h1>
               <p className="text-xl text-white/90 max-w-2xl mx-auto mb-4">
-                To access finance tools, you need to subscribe
+                {t.subscriptionRequiredDesc}
               </p>
               <p className="text-lg text-white/80 max-w-xl mx-auto mb-8">
-                The subscription is voluntary and helps support the platform
+                {t.subscriptionVoluntary}
               </p>
               <Link
                 to="/payment"
                 className="group inline-flex items-center gap-2 px-8 py-4 bg-white text-purple-600 rounded-xl font-medium hover:bg-purple-50 transition-all duration-200 shadow-lg transform hover:scale-[1.02] active:scale-[0.98]"
               >
-                Subscribe Now
+                {t.subscribeNow}
                 <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
@@ -493,16 +491,16 @@ function FinanceToolsPage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
               <div className="inline-block px-5 py-2 bg-purple-100/80 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-sm font-medium mb-6">
-                Features
+                {t.features}
               </div>
               <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white mb-5 leading-tight">
-                What You'll{' '}
+                {t.whatYoullGet}{' '}
                 <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                  Get
+                  {t.get}
                 </span>
               </h2>
               <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-                Powerful tools designed to help you manage your finances effectively
+                {t.featuresDesc}
               </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-10">
@@ -515,10 +513,10 @@ function FinanceToolsPage() {
                     </svg>
                   </div>
                   <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3 text-center">
-                    Budget Tracking
+                    {t.budgetTracking}
                   </h3>
                   <p className="text-gray-600 dark:text-gray-300 text-center leading-relaxed">
-                    Track your income and expenses with ease. Get real-time insights into your spending patterns.
+                    {t.budgetTrackingDesc}
                   </p>
                 </div>
               </div>
@@ -531,10 +529,10 @@ function FinanceToolsPage() {
                     </svg>
                   </div>
                   <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3 text-center">
-                    Financial Reports
+                    {t.financialReportsTitle}
                   </h3>
                   <p className="text-gray-600 dark:text-gray-300 text-center leading-relaxed">
-                    Get detailed insights into your spending habits. Visualize your financial data with comprehensive analytics.
+                    {t.financialReportsDesc}
                   </p>
                 </div>
               </div>
@@ -547,10 +545,10 @@ function FinanceToolsPage() {
                     </svg>
                   </div>
                   <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3 text-center">
-                    Goal Setting
+                    {t.goalSetting}
                   </h3>
                   <p className="text-gray-600 dark:text-gray-300 text-center leading-relaxed">
-                    Set and achieve your financial goals. Track your progress and stay motivated on your journey.
+                    {t.goalSettingDesc}
                   </p>
                 </div>
               </div>
@@ -563,10 +561,10 @@ function FinanceToolsPage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
               <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-                Unlock Full Access
+                {t.unlockFullAccess}
               </h2>
               <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-                Subscribe now to access all premium finance management features
+                {t.unlockFullAccessDesc2}
               </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -578,9 +576,9 @@ function FinanceToolsPage() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Transaction Management</h3>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{t.transactionManagement}</h3>
                     <p className="text-gray-600 dark:text-gray-300">
-                      Record and categorize all your income and expenses with ease. Track every transaction in one place.
+                      {t.transactionManagementDesc}
                     </p>
                   </div>
                 </div>
@@ -593,9 +591,9 @@ function FinanceToolsPage() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Budget Planning</h3>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{t.budgetPlanning}</h3>
                     <p className="text-gray-600 dark:text-gray-300">
-                      Create custom budgets for different categories and track your progress towards financial goals.
+                      {t.budgetPlanningDesc}
                     </p>
                   </div>
                 </div>
@@ -608,9 +606,9 @@ function FinanceToolsPage() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Category Management</h3>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{t.categoryManagement}</h3>
                     <p className="text-gray-600 dark:text-gray-300">
-                      Organize your finances with custom categories. Create, edit, and manage categories that fit your lifestyle.
+                      {t.categoryManagementDesc}
                     </p>
                   </div>
                 </div>
@@ -623,9 +621,9 @@ function FinanceToolsPage() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Analytics & Reports</h3>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{t.analyticsReports}</h3>
                     <p className="text-gray-600 dark:text-gray-300">
-                      Get comprehensive insights with detailed reports and visual analytics of your financial data.
+                      {t.analyticsReportsDesc}
                     </p>
                   </div>
                 </div>
@@ -636,7 +634,7 @@ function FinanceToolsPage() {
                 to="/payment"
                 className="inline-flex items-center gap-2 px-8 py-4 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition-all shadow-lg transform hover:scale-[1.02] active:scale-[0.98]"
               >
-                Subscribe Now to Get Started
+                {t.subscribeNowGetStarted}
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
@@ -660,26 +658,23 @@ function FinanceToolsPage() {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <div className="text-center">
             <div className="inline-block px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-white text-sm font-medium mb-6">
-              💰 Finance Management
+              💰 {t.badge}
             </div>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4">
-              Finance{' '}
-              <span className="bg-gradient-to-r from-yellow-200 via-pink-200 to-purple-200 bg-clip-text text-transparent">
-                Tools
-              </span>
+              {t.title}
             </h1>
             <p className="text-xl text-white/90 max-w-2xl mx-auto mb-6">
-              Welcome to Finance Tools! Manage your finances effectively.
+              {t.welcome} {t.welcomeDesc}
             </p>
             <Badge color="purple" variant="light" className="mb-8 text-base px-4 py-2">
-              Active Subscription
+              {t.activeSubscription}
             </Badge>
             <div className="mt-8">
               <Link
                 to="/finance-tools/dashboard"
                 className="group inline-flex items-center gap-2 px-8 py-4 bg-white text-purple-600 rounded-xl font-medium hover:bg-purple-50 transition-all duration-200 shadow-lg transform hover:scale-[1.02] active:scale-[0.98]"
               >
-                Go to Dashboard
+                {t.goToDashboard}
                 <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
@@ -694,10 +689,10 @@ function FinanceToolsPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              Everything You Can Do
+              {t.everythingYouCanDo}
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-              Explore all the powerful features available in your Finance Tools dashboard
+              {t.everythingYouCanDoDesc}
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -707,9 +702,9 @@ function FinanceToolsPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Transactions</h3>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">{t.transactions}</h3>
               <p className="text-gray-600 dark:text-gray-300 text-sm">
-                Record and manage all your income and expenses
+                {t.transactionsDesc}
               </p>
             </div>
             <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-100 dark:border-gray-700 hover:shadow-lg transition-shadow">
@@ -718,9 +713,9 @@ function FinanceToolsPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Budgets</h3>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">{t.budgets}</h3>
               <p className="text-gray-600 dark:text-gray-300 text-sm">
-                Set and track budgets for different categories
+                {t.budgetsDesc}
               </p>
             </div>
             <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-100 dark:border-gray-700 hover:shadow-lg transition-shadow">
@@ -729,9 +724,9 @@ function FinanceToolsPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Categories</h3>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">{t.categories}</h3>
               <p className="text-gray-600 dark:text-gray-300 text-sm">
-                Organize transactions with custom categories
+                {t.categoriesDesc}
               </p>
             </div>
             <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-100 dark:border-gray-700 hover:shadow-lg transition-shadow">
@@ -740,9 +735,9 @@ function FinanceToolsPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Reports</h3>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">{t.reports}</h3>
               <p className="text-gray-600 dark:text-gray-300 text-sm">
-                View detailed analytics and insights
+                {t.reportsDesc}
               </p>
             </div>
           </div>
@@ -751,7 +746,7 @@ function FinanceToolsPage() {
               to="/finance-tools/dashboard"
               className="inline-flex items-center gap-2 px-8 py-4 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition-all shadow-lg transform hover:scale-[1.02] active:scale-[0.98]"
             >
-              Go to Dashboard
+              {t.goToDashboard}
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>

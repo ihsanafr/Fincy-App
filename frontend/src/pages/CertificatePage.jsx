@@ -2,18 +2,17 @@ import { useEffect, useState, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import api from '../services/api'
 import html2pdf from 'html2pdf.js'
+import { useModal } from '../contexts/ModalContext'
 
 function CertificatePage() {
   const { id } = useParams()
+  const { showAlert } = useModal()
   const [certificate, setCertificate] = useState(null)
   const [loading, setLoading] = useState(true)
   const [pdfUrl, setPdfUrl] = useState(null)
   const [generatingPdf, setGeneratingPdf] = useState(false)
   const [customFileName, setCustomFileName] = useState('')
-  const [customRecipientName, setCustomRecipientName] = useState('')
-  const [customModuleTitle, setCustomModuleTitle] = useState('')
-  const [customCertificateNumber, setCustomCertificateNumber] = useState('')
-  const [customDate, setCustomDate] = useState('')
+  const [publicLink, setPublicLink] = useState('')
   const certificateRef = useRef(null)
 
   // Fixed positions based on the image
@@ -29,50 +28,48 @@ function CertificatePage() {
   }, [id])
 
   useEffect(() => {
-    if (certificate) {
-      // Initialize custom values from certificate data (only once)
-      setCustomRecipientName(prev => prev || certificate.user.name || '')
-      setCustomModuleTitle(prev => prev || certificate.module.title || '')
-      setCustomCertificateNumber(prev => prev || certificate.certificate.certificate_number || '')
-      
-      const issuedDate = new Date(certificate.certificate.issued_at).toLocaleDateString('id-ID', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      })
-      setCustomDate(prev => prev || issuedDate)
-      
-      if (!customFileName) {
-        const sanitizeFileName = (str) => {
-          return str
-            .replace(/[^a-z0-9]/gi, '_')
-            .replace(/_+/g, '_')
-            .toLowerCase()
-            .substring(0, 50)
-        }
-        const userName = certificate.user.name || 'User'
-        const moduleTitle = certificate.module.title || 'Module'
-        const date = new Date(certificate.certificate.issued_at).toISOString().split('T')[0]
-        setCustomFileName(`Sertifikat_${sanitizeFileName(userName)}_${sanitizeFileName(moduleTitle)}_${date}`)
+    if (certificate && !customFileName) {
+      const sanitizeFileName = (str) => {
+        return str
+          .replace(/[^a-z0-9]/gi, '_')
+          .replace(/_+/g, '_')
+          .toLowerCase()
+          .substring(0, 50)
       }
+      const userName = certificate.user.name || 'User'
+      const moduleTitle = certificate.module.title || 'Module'
+      const date = new Date(certificate.certificate.issued_at).toISOString().split('T')[0]
+      setCustomFileName(`Sertifikat_${sanitizeFileName(userName)}_${sanitizeFileName(moduleTitle)}_${date}`)
     }
-  }, [certificate])
+  }, [certificate, customFileName])
 
   useEffect(() => {
-    if (certificate && certificateRef.current && customRecipientName && customModuleTitle && customCertificateNumber && customDate) {
-      // Debounce PDF generation to avoid generating too frequently while typing
+    if (certificate && certificateRef.current) {
+      // Debounce PDF generation to avoid generating too frequently
       const timeoutId = setTimeout(() => {
         generatePdf()
-      }, 500) // Wait 500ms after user stops typing
+      }, 500) // Wait 500ms after component mounts
 
       return () => clearTimeout(timeoutId)
     }
-  }, [certificate, customRecipientName, customModuleTitle, customCertificateNumber, customDate])
+  }, [certificate])
 
   const fetchCertificate = async () => {
     try {
       const response = await api.get(`/modules/${id}/certificate`)
       setCertificate(response.data)
+      // Sertifikat selalu public, pastikan public_link selalu ada
+      if (response.data.public_link) {
+        setPublicLink(response.data.public_link)
+      } else {
+        // Jika belum ada public_link, generate dengan membuat sertifikat public
+        try {
+          const toggleResponse = await api.post(`/modules/${id}/certificate/toggle-public`)
+          setPublicLink(toggleResponse.data.public_link || '')
+        } catch (error) {
+          console.error('Error generating public link:', error)
+        }
+      }
     } catch (error) {
       console.error('Error fetching certificate:', error)
     } finally {
@@ -217,10 +214,10 @@ function CertificatePage() {
     )
   }
 
-  const userName = customRecipientName || certificate.user.name || 'Nama Penerima'
-  const moduleTitle = customModuleTitle || certificate.module.title || 'Nama Kelas'
-  const certificateNumber = customCertificateNumber || certificate.certificate.certificate_number || 'CERT-000000'
-  const issuedDate = customDate || new Date(certificate.certificate.issued_at).toLocaleDateString('id-ID', {
+  const userName = certificate.user.name || 'Nama Penerima'
+  const moduleTitle = certificate.module.title || 'Nama Kelas'
+  const certificateNumber = certificate.certificate.certificate_number || 'CERT-000000'
+  const issuedDate = new Date(certificate.certificate.issued_at).toLocaleDateString('id-ID', {
     year: 'numeric',
     month: 'long',
     day: 'numeric'
@@ -240,104 +237,67 @@ function CertificatePage() {
             </svg>
             Back to Module
           </Link>
-          <button
-            onClick={handleDownload}
-            disabled={!pdfUrl || generatingPdf}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {generatingPdf ? (
-              <>
-                <div className="inline-block animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                Generating PDF...
-              </>
-            ) : (
-              <>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-                Download PDF
-              </>
-            )}
-          </button>
+          <div className="flex items-center gap-3 flex-wrap">
+            <button
+              onClick={handleDownload}
+              disabled={!pdfUrl || generatingPdf}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {generatingPdf ? (
+                <>
+                  <div className="inline-block animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  Generating PDF...
+                </>
+              ) : (
+                <>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Download PDF
+                </>
+              )}
+            </button>
+          </div>
         </div>
 
-        {/* Settings Panel */}
+        {/* Settings Panel - Share & PDF File Name */}
         <div className="max-w-7xl mx-auto mb-6">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Pengaturan Sertifikat</h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* Custom Recipient Name */}
-              <div>
-                <label htmlFor="recipient-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Nama Penerima Sertifikat
-                </label>
-                <input
-                  id="recipient-name"
-                  type="text"
-                  value={customRecipientName}
-                  onChange={(e) => setCustomRecipientName(e.target.value)}
-                  placeholder={certificate?.user.name || 'Masukkan nama penerima'}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-colors"
-                />
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  Nama yang akan muncul di sertifikat
-                </p>
-              </div>
-
-              {/* Custom Module Title */}
-              <div>
-                <label htmlFor="module-title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Judul Modul
-                </label>
-                <input
-                  id="module-title"
-                  type="text"
-                  value={customModuleTitle}
-                  onChange={(e) => setCustomModuleTitle(e.target.value)}
-                  placeholder={certificate?.module.title || 'Masukkan judul modul'}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-colors"
-                />
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  Judul modul yang akan muncul di sertifikat
-                </p>
-              </div>
-
-              {/* Custom Certificate Number */}
-              <div>
-                <label htmlFor="cert-number" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Nomor Sertifikat
-                </label>
-                <input
-                  id="cert-number"
-                  type="text"
-                  value={customCertificateNumber}
-                  onChange={(e) => setCustomCertificateNumber(e.target.value)}
-                  placeholder={certificate?.certificate.certificate_number || 'Masukkan nomor sertifikat'}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-colors"
-                />
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  Nomor sertifikat yang akan muncul
-                </p>
-              </div>
-
-              {/* Custom Date */}
-              <div>
-                <label htmlFor="cert-date" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Tanggal
-                </label>
-                <input
-                  id="cert-date"
-                  type="text"
-                  value={customDate}
-                  onChange={(e) => setCustomDate(e.target.value)}
-                  placeholder="Masukkan tanggal (contoh: 22 Desember 2025)"
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-colors"
-                />
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  Tanggal yang akan muncul di sertifikat
-                </p>
-              </div>
+            <div className="space-y-6">
+              {/* Public Share Link */}
+              {publicLink && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Share Certificate
+                  </label>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                    Share this link with anyone (no login required):
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={publicLink}
+                      readOnly
+                      className="flex-1 px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white text-sm font-mono"
+                    />
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(publicLink)
+                        showAlert({
+                          type: 'success',
+                          title: 'Link Copied!',
+                          message: 'Public link has been copied to clipboard'
+                        })
+                      }}
+                      className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors font-medium"
+                    >
+                      Copy Link
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Custom File Name */}
               <div>
@@ -389,7 +349,13 @@ function CertificatePage() {
 
         {/* Hidden HTML Certificate for PDF Generation */}
         <div className="hidden">
-          <div ref={certificateRef} className="certificate-wrapper">
+          <div 
+            ref={certificateRef} 
+            className="certificate-wrapper"
+            onContextMenu={(e) => e.preventDefault()}
+            onDragStart={(e) => e.preventDefault()}
+            onSelectStart={(e) => e.preventDefault()}
+          >
             {/* SVG Template as Background */}
             <div className="certificate-svg-background">
               <img 

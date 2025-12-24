@@ -4,13 +4,21 @@ import api from '../../services/api'
 import { useModal } from '../../contexts/ModalContext'
 import { Table, TableHeader, TableBody, TableRow, TableCell } from '../../components/ui/Table'
 import Badge from '../../components/ui/Badge'
+import Breadcrumbs from '../../components/ui/Breadcrumbs'
+import { useBreadcrumbs } from '../../hooks/useBreadcrumbs'
+import { sortArray, getSortDirection } from '../../utils/tableSort'
 
 function AdminModules() {
   const { showAlert, showConfirm } = useModal()
   const [modules, setModules] = useState([])
+  const [filteredModules, setFilteredModules] = useState([])
+  const [searchQuery, setSearchQuery] = useState('')
+  const [sortField, setSortField] = useState(null)
+  const [sortDirection, setSortDirection] = useState('asc')
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingModule, setEditingModule] = useState(null)
+  const breadcrumbs = useBreadcrumbs()
 
   useEffect(() => {
     fetchModules()
@@ -20,11 +28,80 @@ function AdminModules() {
     try {
       const response = await api.get('/admin/modules')
       setModules(response.data)
+      setFilteredModules(response.data)
     } catch (error) {
       console.error('Error fetching modules:', error)
     } finally {
       setLoading(false)
     }
+  }
+
+  // Filter and sort modules
+  useEffect(() => {
+    let result = [...modules]
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase()
+      result = result.filter((module) => {
+        return (
+          module.title?.toLowerCase().includes(query) ||
+          module.description?.toLowerCase().includes(query) ||
+          module.category?.toLowerCase().includes(query)
+        )
+      })
+    }
+
+    // Apply sorting
+    if (sortField) {
+      result = sortArray(result, sortField, sortDirection)
+    }
+
+    setFilteredModules(result)
+  }, [searchQuery, modules, sortField, sortDirection])
+
+  const handleSort = (field) => {
+    const newDirection = getSortDirection(sortDirection, sortField, field)
+    setSortField(field)
+    setSortDirection(newDirection)
+  }
+
+  const SortableHeader = ({ field, children, className = '' }) => {
+    const isActive = sortField === field
+    return (
+      <TableCell
+        isHeader
+        className={`${className} cursor-pointer select-none group`}
+        onClick={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          handleSort(field)
+        }}
+        style={{ userSelect: 'none' }}
+      >
+        <div className="flex items-center gap-2">
+          <span>{children}</span>
+          <div className="flex items-center">
+            {isActive ? (
+              <svg
+                className={`w-4 h-4 text-brand-600 dark:text-brand-400 ${
+                  sortDirection === 'asc' ? '' : 'rotate-180'
+                } transition-transform`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+              </svg>
+            ) : (
+              <svg className="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-50 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+              </svg>
+            )}
+          </div>
+        </div>
+      </TableCell>
+    )
   }
 
   const handleDelete = async (id) => {
@@ -66,20 +143,40 @@ function AdminModules() {
 
   return (
     <div>
+      {/* Breadcrumbs */}
+      <Breadcrumbs items={breadcrumbs} />
+
       {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800 dark:text-white/90">Learning Modules</h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Manage learning modules and their content
-          </p>
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800 dark:text-white/90">Learning Modules</h1>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Manage learning modules and their content
+            </p>
+          </div>
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors font-medium"
+          >
+            {showForm ? 'Cancel' : '+ Create New Module'}
+          </button>
         </div>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors font-medium"
-        >
-          {showForm ? 'Cancel' : '+ Create New Module'}
-        </button>
+        {/* Search Bar */}
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
+            <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search modules by title, description, or category..."
+            className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent relative z-0"
+          />
+        </div>
       </div>
 
       {/* Form */}
@@ -106,33 +203,37 @@ function AdminModules() {
           <div className="p-12 text-center">
             <p className="text-gray-500 dark:text-gray-400">No modules yet. Create your first module!</p>
           </div>
+        ) : filteredModules.length === 0 ? (
+          <div className="p-12 text-center">
+            <p className="text-gray-500 dark:text-gray-400">No modules found matching your search.</p>
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-50 dark:bg-gray-800/50">
-                  <TableCell isHeader className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
+                  <SortableHeader field="title" className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
                     Title
-                  </TableCell>
-                  <TableCell isHeader className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
+                  </SortableHeader>
+                  <SortableHeader field="category" className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
                     Category
-                  </TableCell>
+                  </SortableHeader>
                   <TableCell isHeader className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
                     Contents
                   </TableCell>
                   <TableCell isHeader className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
                     Quiz Questions
                   </TableCell>
-                  <TableCell isHeader className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
+                  <SortableHeader field="is_active" className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
                     Status
-                  </TableCell>
+                  </SortableHeader>
                   <TableCell isHeader className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
                     Actions
                   </TableCell>
                 </TableRow>
               </TableHeader>
               <TableBody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
-                {modules.map((module, index) => (
+                {filteredModules.map((module, index) => (
                   <TableRow 
                     key={module.id} 
                     className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all duration-200 animate-fadeInUp"
@@ -186,15 +287,21 @@ function AdminModules() {
                             setEditingModule(module)
                             setShowForm(true)
                           }}
-                          className="text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300 transition-all duration-200 transform hover:scale-110"
+                          className="p-2 text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-500/10 rounded-lg transition-all duration-200"
+                          title="Edit Module"
                         >
-                          Edit
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
                         </button>
                         <button
                           onClick={() => handleDelete(module.id)}
-                          className="text-error-600 hover:text-error-700 dark:text-error-400 dark:hover:text-error-300 transition-all duration-200 transform hover:scale-110"
+                          className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-all duration-200"
+                          title="Delete Module"
                         >
-                          Delete
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
                         </button>
                       </div>
                     </TableCell>

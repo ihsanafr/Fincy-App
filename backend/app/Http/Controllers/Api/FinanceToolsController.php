@@ -18,13 +18,24 @@ class FinanceToolsController extends Controller
     public function checkStatus()
     {
         $user = Auth::user();
-        $subscription = $user->subscription;
+        
+        // Get the latest subscription (most recent one)
+        $subscription = $user->subscriptions()->latest()->first();
+        
+        // If there's an approved subscription, prioritize it
+        $approvedSubscription = $user->subscriptions()
+            ->where('status', Subscription::STATUS_APPROVED)
+            ->latest()
+            ->first();
+        
+        // Use approved subscription if exists, otherwise use latest
+        $activeSubscription = $approvedSubscription ?? $subscription;
 
         $subscriptionData = null;
-        if ($subscription) {
-            $subscriptionData = $subscription->toArray();
-            if (!empty($subscription->payment_proof)) {
-                $subscriptionData['payment_proof_url'] = asset('storage/' . $subscription->payment_proof);
+        if ($activeSubscription) {
+            $subscriptionData = $activeSubscription->toArray();
+            if (!empty($activeSubscription->payment_proof)) {
+                $subscriptionData['payment_proof_url'] = asset('storage/' . $activeSubscription->payment_proof);
             } else {
                 $subscriptionData['payment_proof_url'] = null;
             }
@@ -33,10 +44,10 @@ class FinanceToolsController extends Controller
         return response()->json([
             'has_subscription' => $user->hasActiveSubscription(),
             'subscription' => $subscriptionData,
-            'subscription_status' => $subscription?->status,
-            'is_pending' => (bool) ($subscription?->isPending()),
-            'is_approved' => (bool) ($subscription?->isApproved()),
-            'is_rejected' => (bool) ($subscription?->isRejected()),
+            'subscription_status' => $activeSubscription?->status,
+            'is_pending' => (bool) ($activeSubscription?->isPending()),
+            'is_approved' => (bool) ($activeSubscription?->isApproved()),
+            'is_rejected' => (bool) ($activeSubscription?->isRejected()),
         ]);
     }
 
@@ -49,17 +60,27 @@ class FinanceToolsController extends Controller
 
         $user = Auth::user();
 
-        // Check if user already has pending or approved subscription
-        $existingSubscription = $user->subscription;
-        if ($existingSubscription && $existingSubscription->isApproved()) {
+        // Check if user already has pending subscription
+        $pendingSubscription = $user->subscriptions()
+            ->where('status', Subscription::STATUS_PENDING)
+            ->latest()
+            ->first();
+            
+        if ($pendingSubscription) {
             return response()->json([
-                'message' => 'You already have an active subscription',
+                'message' => 'You have a pending subscription request',
             ], 400);
         }
 
-        if ($existingSubscription && $existingSubscription->isPending()) {
+        // Check if user already has approved subscription
+        $approvedSubscription = $user->subscriptions()
+            ->where('status', Subscription::STATUS_APPROVED)
+            ->latest()
+            ->first();
+            
+        if ($approvedSubscription) {
             return response()->json([
-                'message' => 'You have a pending subscription request',
+                'message' => 'You already have an active subscription',
             ], 400);
         }
 

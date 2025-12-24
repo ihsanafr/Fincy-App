@@ -52,12 +52,6 @@ const RecentUsers = ({ users }) => {
                 isHeader
                 className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
               >
-                Status
-              </TableCell>
-              <TableCell
-                isHeader
-                className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-              >
                 Joined
               </TableCell>
             </TableRow>
@@ -83,9 +77,6 @@ const RecentUsers = ({ users }) => {
                   </TableCell>
                   <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
                     {user.email}
-                  </TableCell>
-                  <TableCell className="py-3">
-                    {getStatusBadge(user.subscription)}
                   </TableCell>
                   <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
                     {new Date(user.created_at).toLocaleDateString()}

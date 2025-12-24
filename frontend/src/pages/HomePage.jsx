@@ -1,10 +1,14 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { useLanguage } from '../contexts/LanguageContext'
+import { translations } from '../utils/translations'
 import ScrollReveal from '../components/ScrollReveal'
 import CounterAnimation from '../components/CounterAnimation'
 
 function HomePage() {
   const { user } = useAuth()
+  const { language } = useLanguage()
+  const t = translations[language].homepage
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-purple-50/20 dark:from-gray-900 dark:via-gray-800 dark:to-purple-900/5 overflow-x-hidden">
@@ -27,23 +31,23 @@ function HomePage() {
             
             <ScrollReveal direction="up" delay={200}>
               <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight">
-                Revolutionize Your{' '}
+                {t.title}{' '}
                 <span className="bg-gradient-to-r from-yellow-200 via-pink-200 to-purple-200 bg-clip-text text-transparent">
-                  Financial Future
+                  {t.titleHighlight}
                 </span>
               </h1>
             </ScrollReveal>
             
             <ScrollReveal direction="up" delay={300}>
               <p className="text-xl sm:text-2xl text-white/95 mb-8 max-w-2xl mx-auto leading-relaxed font-light">
-                Simple, Secure, and Convenient. Learn financial literacy and manage your money effectively.
+                {t.subtitle}
               </p>
             </ScrollReveal>
             
             {user && (
               <ScrollReveal direction="fade" delay={400}>
                 <div className="inline-flex items-center gap-3 px-6 py-3 bg-white/10 backdrop-blur-md rounded-full text-white border border-white/20 hover:bg-white/20 transition-all duration-300">
-                  <span>Welcome back, {user.name}!</span>
+                  <span>{t.welcomeBack} {user.name}!</span>
                   <span className="text-2xl">👋</span>
                 </div>
               </ScrollReveal>
@@ -55,7 +59,7 @@ function HomePage() {
                     to="/register"
                     className="group px-8 py-4 bg-white text-brand-600 rounded-xl font-medium hover:bg-brand-50 transition-all duration-200 shadow-lg transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
                   >
-                    Get Started
+                    {t.getStarted}
                     <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                     </svg>
@@ -64,7 +68,7 @@ function HomePage() {
                     to="/learning-modules"
                     className="px-8 py-4 bg-white/10 backdrop-blur-md text-white border-2 border-white/30 rounded-xl font-medium hover:bg-white/20 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
                   >
-                    Explore Modules
+                    {t.exploreModules}
                   </Link>
                 </div>
               </ScrollReveal>
@@ -82,7 +86,7 @@ function HomePage() {
                 <div className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-brand-600 to-purple-600 bg-clip-text text-transparent mb-2 transition-all duration-300 group-hover:scale-110 inline-block">
                   <CounterAnimation end={500} suffix="+" />
                 </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">Active Learners</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">{t.activeLearners}</div>
               </div>
             </ScrollReveal>
             <ScrollReveal direction="up" delay={200}>
@@ -90,7 +94,7 @@ function HomePage() {
                 <div className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2 transition-all duration-300 group-hover:scale-110 inline-block">
                   <CounterAnimation end={50} suffix="+" />
                 </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">Learning Modules</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">{t.learningModules}</div>
               </div>
             </ScrollReveal>
             <ScrollReveal direction="up" delay={300}>
@@ -98,7 +102,7 @@ function HomePage() {
                 <div className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-brand-600 to-blue-600 bg-clip-text text-transparent mb-2 transition-all duration-300 group-hover:scale-110 inline-block">
                   <CounterAnimation end={1000} suffix="+" />
                 </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">Certificates Issued</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">{t.certificatesIssued}</div>
               </div>
             </ScrollReveal>
             <ScrollReveal direction="up" delay={400}>
@@ -106,7 +110,7 @@ function HomePage() {
                 <div className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mb-2 transition-all duration-300 group-hover:scale-110 inline-block">
                   <CounterAnimation end={4.8} suffix="★" />
                 </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">Average Rating</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">{t.averageRating}</div>
               </div>
             </ScrollReveal>
           </div>
@@ -120,16 +124,16 @@ function HomePage() {
           <ScrollReveal direction="fade" delay={100}>
             <div className="text-center mb-16">
               <div className="inline-block px-5 py-2 bg-purple-100/80 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-sm font-medium mb-6 hover:scale-105 transition-transform duration-300 cursor-default">
-                Our Features
+                {t.ourFeatures}
               </div>
               <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white mb-5 leading-tight">
-                Everything You Need to{' '}
+                {t.everythingYouNeed}{' '}
                 <span className="bg-gradient-to-r from-brand-600 to-purple-600 bg-clip-text text-transparent">
-                  Improve Your Financial Literacy
+                  {t.improveFinancial}
                 </span>
               </h2>
               <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed">
-                Discover powerful tools designed to help you save more, invest wisely, and plan ahead — effortlessly.
+                {t.discoverPowerful}
               </p>
             </div>
           </ScrollReveal>
@@ -148,16 +152,16 @@ function HomePage() {
                     </svg>
                   </div>
                   <h3 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-4">
-                    Learning Modules
+                    {t.learningModulesTitle}
                   </h3>
                   <p className="text-gray-600 dark:text-gray-300 mb-6 text-lg leading-relaxed flex-grow">
-                    Access free learning modules with video and text content. Complete quizzes and earn certificates to showcase your knowledge.
+                    {t.learningModulesDesc}
                   </p>
                   <Link
                     to="/learning-modules"
                     className="inline-flex items-center gap-2 text-brand-600 dark:text-brand-400 font-medium text-lg hover:gap-3 transition-all group/link mt-auto"
                   >
-                    Explore Modules
+                    {t.exploreModules}
                     <svg className="w-5 h-5 group-hover/link:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                     </svg>
@@ -179,16 +183,16 @@ function HomePage() {
                     </svg>
                   </div>
                   <h3 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-4">
-                    Finance Tools
+                    {t.financeToolsTitle}
                   </h3>
                   <p className="text-gray-600 dark:text-gray-300 mb-6 text-lg leading-relaxed flex-grow">
-                    Simple money management tools to help you track and manage your finances effectively. Take control of your financial future.
+                    {t.financeToolsDesc}
                   </p>
                   <Link
                     to="/finance-tools"
                     className="inline-flex items-center gap-2 text-purple-600 dark:text-purple-400 font-medium text-lg hover:gap-3 transition-all group/link mt-auto"
                   >
-                    View Tools
+                    {t.viewTools}
                     <svg className="w-5 h-5 group-hover/link:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                     </svg>
@@ -206,12 +210,12 @@ function HomePage() {
           <ScrollReveal direction="fade" delay={100}>
             <div className="text-center mb-16">
               <div className="inline-block px-5 py-2 bg-brand-100/80 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 rounded-full text-sm font-medium mb-6 hover:scale-105 transition-transform duration-300 cursor-default">
-                How It Works
+                {t.howItWorks}
               </div>
               <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white mb-5 leading-tight">
-                Start Your Journey in{' '}
+                {t.startJourney}{' '}
                 <span className="bg-gradient-to-r from-brand-600 to-purple-600 bg-clip-text text-transparent">
-                  3 Easy Steps
+                  {t.threeSteps}
                 </span>
               </h2>
             </div>
@@ -219,9 +223,9 @@ function HomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-10">
             {[
-              { step: '01', title: 'Create Account', desc: 'Sign up for free and join our community of learners', icon: '👤', color: 'from-brand-500 to-brand-600' },
-              { step: '02', title: 'Choose Module', desc: 'Browse and select learning modules that interest you', icon: '📚', color: 'from-purple-500 to-purple-600' },
-              { step: '03', title: 'Learn & Earn', desc: 'Complete modules, take quizzes, and earn certificates', icon: '🎓', color: 'from-pink-500 to-pink-600' },
+              { step: '01', title: t.step1, desc: t.step1Desc, icon: '👤', color: 'from-brand-500 to-brand-600' },
+              { step: '02', title: t.step2, desc: t.step2Desc, icon: '📚', color: 'from-purple-500 to-purple-600' },
+              { step: '03', title: t.step3, desc: t.step3Desc, icon: '🎓', color: 'from-pink-500 to-pink-600' },
             ].map((item, index) => (
               <ScrollReveal key={index} direction="up" delay={index * 100}>
                 <div className="group">
@@ -252,16 +256,16 @@ function HomePage() {
           <ScrollReveal direction="fade" delay={100}>
             <div className="text-center mb-16">
               <div className="inline-block px-5 py-2 bg-purple-100/80 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-sm font-medium mb-6">
-                Testimonials
+                {t.testimonials}
               </div>
               <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white mb-5 leading-tight">
-                What Our{' '}
+                {t.whatLearnersSay}{' '}
                 <span className="bg-gradient-to-r from-brand-600 to-purple-600 bg-clip-text text-transparent">
-                  Learners Say
+                  {t.ourLearners}
                 </span>
               </h2>
               <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed">
-                Join thousands of satisfied learners who have transformed their financial future with Fincy
+                {t.joinThousands}
               </p>
             </div>
           </ScrollReveal>
@@ -365,12 +369,12 @@ function HomePage() {
           <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <ScrollReveal direction="up" delay={100}>
               <h2 className="text-4xl sm:text-5xl font-bold text-white mb-6 leading-tight">
-                Ready to Start Your Financial Journey?
+                {t.readyToStart}
               </h2>
             </ScrollReveal>
             <ScrollReveal direction="up" delay={200}>
               <p className="text-xl text-white/90 mb-10 max-w-2xl mx-auto leading-relaxed">
-                Join thousands of learners improving their financial literacy and taking control of their financial future.
+                {t.readyToStartDesc}
               </p>
             </ScrollReveal>
             <ScrollReveal direction="up" delay={300}>
@@ -379,7 +383,7 @@ function HomePage() {
                   to="/register"
                   className="group px-8 py-4 bg-white text-brand-600 rounded-xl font-medium hover:bg-brand-50 transition-all duration-300 shadow-xl transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
                 >
-                  Create Free Account
+                  {t.createFreeAccount}
                   <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
@@ -388,7 +392,7 @@ function HomePage() {
                   to="/login"
                   className="px-8 py-4 bg-white/10 backdrop-blur-md text-white border-2 border-white/30 rounded-xl font-medium hover:bg-white/20 hover:border-white/50 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
                 >
-                  Sign In
+                  {t.signIn}
                 </Link>
               </div>
             </ScrollReveal>

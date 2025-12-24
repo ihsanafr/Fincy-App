@@ -184,27 +184,21 @@ function ProfilePage() {
     )
   }
 
-  const allPortfolioItems = [
-    ...profile.portfolio.certificates.map(cert => ({
-      ...cert,
-      type: 'certificate',
-      date: cert.issued_at
-    })),
-    ...profile.portfolio.completed_modules
-      .filter(module => !profile.portfolio.certificates.some(cert => cert.module_id === module.module_id))
-      .map(module => ({
-        ...module,
-        type: 'completed',
-        date: module.completed_at
-      })),
-    ...profile.portfolio.passed_quizzes
-      .filter(quiz => !profile.portfolio.certificates.some(cert => cert.module_id === quiz.module_id))
-      .map(quiz => ({
-        ...quiz,
-        type: 'quiz',
-        date: quiz.passed_at
-      }))
-  ].sort((a, b) => new Date(b.date) - new Date(a.date))
+  // Hanya menampilkan certificates yang sudah menyelesaikan quiz dan mendapat sertifikat
+  const allPortfolioItems = profile.portfolio.certificates
+    .map(cert => {
+      // Pastikan public_link ada
+      if (!cert.public_link) {
+        console.warn('Certificate missing public_link:', cert)
+      }
+      return {
+        ...cert,
+        type: 'certificate',
+        date: cert.issued_at,
+        public_link: cert.public_link || null
+      }
+    })
+    .sort((a, b) => new Date(b.date) - new Date(a.date))
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 py-12 px-4 sm:px-6 lg:px-8">
@@ -431,7 +425,7 @@ function ProfilePage() {
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              {allPortfolioItems.length} Achievements
+              {allPortfolioItems.length} Items
             </div>
           </div>
 
@@ -442,7 +436,7 @@ function ProfilePage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">No Achievements Yet</h3>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">No Portfolio Items Yet</h3>
               <p className="text-gray-600 dark:text-gray-400 mb-6">
                 Start learning modules to build your portfolio
               </p>
@@ -455,30 +449,58 @@ function ProfilePage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {allPortfolioItems.map((item, index) => (
+              {allPortfolioItems.map((item, index) => {
+                // Default link ke modul
+                let linkTo = `/learning-modules/${item.module_id}`
+                
+                // Jika item adalah sertifikat, link ke halaman sertifikat public
+                if (item.type === 'certificate') {
+                  if (item.public_link) {
+                    const publicLink = item.public_link.trim()
+                    
+                    // Extract path dari URL
+                    if (publicLink.startsWith('http://') || publicLink.startsWith('https://')) {
+                      // Full URL - extract pathname
+                      try {
+                        const url = new URL(publicLink)
+                        linkTo = url.pathname
+                      } catch (e) {
+                        // Fallback: extract path dengan regex
+                        const pathMatch = publicLink.match(/(\/certificate\/public\/[^?#]+)/)
+                        if (pathMatch && pathMatch[1]) {
+                          linkTo = pathMatch[1]
+                        }
+                      }
+                    } else if (publicLink.startsWith('/certificate/public/')) {
+                      // Sudah berupa path yang benar
+                      linkTo = publicLink.split('?')[0].split('#')[0] // Remove query string dan hash
+                    } else if (publicLink.startsWith('/')) {
+                      // Path lain, gunakan langsung
+                      linkTo = publicLink.split('?')[0].split('#')[0]
+                    } else {
+                      // Coba extract path dari string
+                      const pathMatch = publicLink.match(/(\/certificate\/public\/[^?#]+)/)
+                      if (pathMatch && pathMatch[1]) {
+                        linkTo = pathMatch[1]
+                      }
+                    }
+                  } else {
+                    console.warn('Certificate missing public_link:', item)
+                  }
+                }
+                
+                return (
                 <Link
                   key={`${item.type}-${item.module_id || item.id}-${index}`}
-                  to={`/learning-modules/${item.module_id}`}
+                  to={linkTo}
                   className="group bg-gradient-to-br from-white to-gray-50 dark:from-gray-700 dark:to-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-600 hover:border-brand-500 dark:hover:border-brand-500 hover:shadow-lg transition-all duration-200"
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        {item.type === 'certificate' && (
-                          <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-semibold rounded">
-                            Certificate
-                          </span>
-                        )}
-                        {item.type === 'completed' && (
-                          <span className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs font-semibold rounded">
-                            Completed
-                          </span>
-                        )}
-                        {item.type === 'quiz' && (
-                          <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs font-semibold rounded">
-                            Quiz Passed
-                          </span>
-                        )}
+                        <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-semibold rounded">
+                          Certificate
+                        </span>
                       </div>
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors mb-2">
                         {item.module_title}
@@ -498,22 +520,18 @@ function ProfilePage() {
                         day: 'numeric'
                       })}
                     </span>
-                    {item.type === 'quiz' && item.score && (
-                      <span className="font-semibold text-purple-600 dark:text-purple-400">
-                        Score: {item.score}%
-                      </span>
-                    )}
-                    {item.type === 'certificate' && item.certificate_number && (
+                    {item.certificate_number && (
                       <span className="font-mono text-xs text-gray-400">
                         {item.certificate_number.substring(0, 12)}...
                       </span>
                     )}
                   </div>
                 </Link>
-              ))}
+              )})}
             </div>
           )}
         </div>
+
       </div>
     </div>
   )
