@@ -1,4 +1,9 @@
 /**
+ * @fincy-doc
+ * Ringkasan: File ini berisi kode aplikasi.
+ * Manfaat: Membantu memisahkan tanggung jawab dan memudahkan perawatan.
+ */
+/**
  * Utility functions for table sorting and filtering
  */
 

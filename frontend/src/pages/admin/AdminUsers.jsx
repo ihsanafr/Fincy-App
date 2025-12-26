@@ -1,3 +1,8 @@
+/**
+ * @fincy-doc
+ * Ringkasan: File ini berisi kode aplikasi.
+ * Manfaat: Membantu memisahkan tanggung jawab dan memudahkan perawatan.
+ */
 import { useEffect, useState } from 'react'
 import api from '../../services/api'
 import { useAuth } from '../../contexts/AuthContext'
@@ -107,9 +112,15 @@ function AdminUsers() {
   }
 
   const handleRoleChange = async (userId, newRole) => {
+    const roleLabel = (role) => {
+      if (role === 'super_admin') return 'Super Admin'
+      if (role === 'educator') return 'Educator'
+      return 'User'
+    }
+
     showConfirm({
       title: 'Change User Role',
-      message: `Are you sure you want to change this user's role to ${newRole === 'super_admin' ? 'Super Admin' : 'User'}?`,
+      message: `Are you sure you want to change this user's role to ${roleLabel(newRole)}?`,
       type: 'warning',
       onConfirm: async () => {
         try {
@@ -287,10 +298,10 @@ function AdminUsers() {
                       </TableCell>
                       <TableCell className="px-6 py-4 whitespace-nowrap">
                         <Badge
-                          color={user.role === 'super_admin' ? 'error' : 'light'}
+                          color={user.role === 'super_admin' ? 'error' : user.role === 'educator' ? 'warning' : 'light'}
                           variant="light"
                         >
-                          {user.role === 'super_admin' ? 'Admin' : 'User'}
+                          {user.role === 'super_admin' ? 'Admin' : user.role === 'educator' ? 'Educator' : 'User'}
                         </Badge>
                       </TableCell>
                       <TableCell className="px-6 py-4 whitespace-nowrap">
@@ -315,6 +326,7 @@ function AdminUsers() {
                               className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent hover:border-brand-500 dark:hover:border-brand-400 transition-colors cursor-pointer"
                             >
                               <option value="user">User</option>
+                              <option value="educator">Educator</option>
                               <option value="super_admin">Super Admin</option>
                             </select>
                             <button

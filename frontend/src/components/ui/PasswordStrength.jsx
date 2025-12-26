@@ -1,3 +1,8 @@
+/**
+ * @fincy-doc
+ * Ringkasan: File ini berisi kode aplikasi.
+ * Manfaat: Membantu memisahkan tanggung jawab dan memudahkan perawatan.
+ */
 function PasswordStrength({ password }) {
   const calculateStrength = (pwd) => {
     if (!pwd) return { strength: 0, label: '', color: '' }

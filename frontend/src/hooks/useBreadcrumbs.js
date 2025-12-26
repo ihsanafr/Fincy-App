@@ -1,3 +1,8 @@
+/**
+ * @fincy-doc
+ * Ringkasan: File ini berisi kode aplikasi.
+ * Manfaat: Membantu memisahkan tanggung jawab dan memudahkan perawatan.
+ */
 import { useLocation } from 'react-router-dom'
 
 export function useBreadcrumbs() {

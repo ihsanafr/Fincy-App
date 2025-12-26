@@ -1,5 +1,11 @@
 <?php
 
+/**
+ * @fincy-doc
+ * Ringkasan: File ini berisi kode backend.
+ * Manfaat: Menjaga logika server tetap terstruktur dan mudah dirawat.
+ */
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -28,4 +34,5 @@ class Quiz extends Model
         return $this->hasMany(QuizAttempt::class);
     }
 }
+
 

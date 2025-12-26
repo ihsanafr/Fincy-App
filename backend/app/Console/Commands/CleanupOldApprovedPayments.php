@@ -1,5 +1,11 @@
 <?php
 
+/**
+ * @fincy-doc
+ * Ringkasan: File ini berisi kode backend.
+ * Manfaat: Menjaga logika server tetap terstruktur dan mudah dirawat.
+ */
+
 namespace App\Console\Commands;
 
 use App\Models\Subscription;
@@ -76,3 +82,4 @@ class CleanupOldApprovedPayments extends Command
         return Command::SUCCESS;
     }
 }
+

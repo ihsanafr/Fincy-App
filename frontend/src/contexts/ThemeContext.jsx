@@ -1,3 +1,8 @@
+/**
+ * @fincy-doc
+ * Ringkasan: Context untuk mengatur tema (mode terang/gelap).
+ * Manfaat: Membuat tampilan konsisten di seluruh aplikasi serta menyimpan pilihan tema di localStorage.
+ */
 import { createContext, useContext, useState, useEffect } from 'react'
 
 const ThemeContext = createContext(undefined)

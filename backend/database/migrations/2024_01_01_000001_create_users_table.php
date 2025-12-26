@@ -14,7 +14,8 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->enum('role', ['super_admin', 'user'])->default('user');
+            // Role user: super_admin (admin), educator (kontributor modul), user (pengguna biasa)
+            $table->enum('role', ['super_admin', 'educator', 'user'])->default('user');
             $table->rememberToken();
             $table->timestamps();
         });

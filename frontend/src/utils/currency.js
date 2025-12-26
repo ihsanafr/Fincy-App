@@ -1,4 +1,9 @@
 /**
+ * @fincy-doc
+ * Ringkasan: File ini berisi kode aplikasi.
+ * Manfaat: Membantu memisahkan tanggung jawab dan memudahkan perawatan.
+ */
+/**
  * Format number to Indonesian Rupiah currency
  * @param {number|string} amount - The amount to format
  * @returns {string} Formatted currency string (e.g., "Rp 20.000,00")
@@ -57,12 +62,17 @@ export const formatRupiahWithDecimals = (amount) => {
 export const formatRupiahInput = (value) => {
   if (!value) return ''
   
+  // Pastikan value adalah string atau number
+  const stringValue = value.toString()
+  
   // Remove all non-numeric characters (including dots and commas)
-  const numericValue = value.toString().replace(/[^\d]/g, '')
+  // Ini penting untuk mencegah double format
+  const numericValue = stringValue.replace(/[^\d]/g, '')
   
   if (!numericValue) return ''
   
   // Format with thousand separators (dots)
+  // Pastikan hanya format sekali, tidak double format
   return numericValue.replace(/\B(?=(\d{3})+(?!\d))/g, '.')
 }
 

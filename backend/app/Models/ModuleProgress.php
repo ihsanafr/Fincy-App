@@ -1,5 +1,11 @@
 <?php
 
+/**
+ * @fincy-doc
+ * Ringkasan: File ini berisi kode backend.
+ * Manfaat: Menjaga logika server tetap terstruktur dan mudah dirawat.
+ */
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -29,4 +35,5 @@ class ModuleProgress extends Model
         return $this->belongsTo(Module::class);
     }
 }
+
 

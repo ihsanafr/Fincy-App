@@ -1,4 +1,10 @@
+/**
+ * @fincy-doc
+ * Ringkasan: File ini berisi kode aplikasi.
+ * Manfaat: Membantu memisahkan tanggung jawab dan memudahkan perawatan.
+ */
 import { useState, useMemo, useRef } from 'react'
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import Badge from '../ui/Badge'
 import { formatRupiah } from '../../utils/currency'
 
@@ -117,7 +123,7 @@ const SimpleAreaChart = ({ data = [], color = '#4f46e5', label, height = 160 }) 
         className="relative w-full overflow-hidden rounded-xl bg-gradient-to-b from-brand-50 via-white to-white dark:from-brand-950/40 dark:via-gray-900 dark:to-gray-900 border border-gray-100 dark:border-gray-800"
         onMouseLeave={handleMouseLeave}
       >
-        <svg viewBox={`0 0 300 ${height + 20}`} className="w-full" style={{ height: `${height}px` }}>
+        <svg viewBox={`0 0 300 ${height + 30}`} className="w-full" style={{ height: `${height + 20}px` }}>
           <defs>
             <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor={color} stopOpacity="0.25" />
@@ -175,8 +181,8 @@ const SimpleAreaChart = ({ data = [], color = '#4f46e5', label, height = 160 }) 
                   cx={point.x}
                   cy={point.y}
                   r={isHovered ? "7" : "5"}
-                  fill={color}
-                  stroke="white"
+                  fill="white"
+                  stroke={color}
                   strokeWidth={isHovered ? "3" : "2"}
                   className="cursor-pointer transition-all duration-300 ease-out"
                   style={{
@@ -184,6 +190,26 @@ const SimpleAreaChart = ({ data = [], color = '#4f46e5', label, height = 160 }) 
                   }}
                   onMouseEnter={(e) => handleMouseMove(e, point, idx)}
                 />
+                {/* Inner dot (biar garis terlihat pas melewati titik) */}
+                <circle
+                  cx={point.x}
+                  cy={point.y}
+                  r={isHovered ? "3" : "2.5"}
+                  fill={color}
+                  className="pointer-events-none transition-all duration-300 ease-out"
+                />
+                {/* X-axis label: render langsung di SVG agar pasti sejajar dengan titik */}
+                <text
+                  x={point.x}
+                  y={height + 16}
+                  textAnchor="middle"
+                  className={`text-xs transition-colors duration-200 ${
+                    isHovered ? 'text-gray-600 dark:text-gray-300 font-medium' : 'text-gray-400 dark:text-gray-500'
+                  }`}
+                  style={{ userSelect: 'none', pointerEvents: 'none' }}
+                >
+                  {point.label}
+                </text>
               </g>
             )
           })}
@@ -198,21 +224,6 @@ const SimpleAreaChart = ({ data = [], color = '#4f46e5', label, height = 160 }) 
             visible={tooltip.visible}
           />
         )}
-        <div 
-          className="px-4 pb-2 text-xs text-gray-400 dark:text-gray-500 grid gap-1"
-          style={{ gridTemplateColumns: `repeat(${Math.max(data.length, 1)}, minmax(0, 1fr))` }}
-        >
-          {data.map((d, idx) => (
-            <span
-              key={d.label}
-              className={`text-center truncate transition-colors duration-200 ${
-                hoveredIndex === idx ? 'text-gray-600 dark:text-gray-300 font-medium' : ''
-              }`}
-            >
-              {d.label}
-            </span>
-          ))}
-        </div>
       </div>
     </div>
   )
@@ -329,30 +340,83 @@ function DashboardCharts({ chartData, showEngagementOnly = false, showPaymentsOn
 
   const statusSummary = chartData?.status_summary || {}
 
-  // Show only Engagement Trend (larger)
+  // Show only Engagement Trend (larger) - menggunakan Recharts seperti Finance Tools
   if (showEngagementOnly) {
+    // Transform data untuk Recharts
+    const engagementData = registrations.map((reg, idx) => ({
+      date: reg.label,
+      registrations: reg.value,
+      completions: completions[idx]?.value || 0,
+    }))
+
     return (
-      <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 md:p-6 lg:p-8">
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
         <div className="mb-6">
-          <h3 className="text-xl font-semibold text-gray-800 dark:text-white/90">Engagement Trend</h3>
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white">Engagement Trend</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Last 7 days</p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <SimpleAreaChart data={registrations} color="#6366f1" label="Registrations" height={220} />
-          <SimpleAreaChart data={completions} color="#22d3ee" label="Completions" height={220} />
-        </div>
+        {engagementData.length > 0 ? (
+          <ResponsiveContainer width="100%" height={300}>
+            <AreaChart data={engagementData}>
+              <defs>
+                <linearGradient id="colorRegistrations" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#6366f1" stopOpacity={0.8}/>
+                  <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                </linearGradient>
+                <linearGradient id="colorCompletions" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#22d3ee" stopOpacity={0.8}/>
+                  <stop offset="95%" stopColor="#22d3ee" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" className="dark:stroke-gray-700" />
+              <XAxis 
+                dataKey="date" 
+                stroke="#6b7280"
+                tick={{ fill: '#6b7280' }}
+                className="dark:text-gray-400"
+              />
+              <YAxis 
+                stroke="#6b7280"
+                tick={{ fill: '#6b7280' }}
+                className="dark:text-gray-400"
+              />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '8px',
+                  padding: '12px'
+                }}
+                className="dark:bg-gray-800 dark:border-gray-700"
+              />
+              <Legend />
+              <Area type="monotone" dataKey="registrations" stroke="#6366f1" fillOpacity={1} fill="url(#colorRegistrations)" name="Registrations" />
+              <Area type="monotone" dataKey="completions" stroke="#22d3ee" fillOpacity={1} fill="url(#colorCompletions)" name="Completions" />
+            </AreaChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="h-[300px] flex items-center justify-center text-gray-500 dark:text-gray-400">
+            <p>No chart data available</p>
+          </div>
+        )}
       </div>
     )
   }
 
-  // Show only Payments Insight
+  // Show only Payments Insight - menggunakan Recharts seperti Finance Tools
   if (showPaymentsOnly) {
+    // Transform data untuk Recharts
+    const paymentsData = paymentsAmount.map((d) => ({
+      date: d.label,
+      amount: d.value,
+    }))
+
     return (
-      <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 md:p-6 h-full flex flex-col">
-        <div className="mb-4">
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700 h-full flex flex-col">
+        <div className="mb-6">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
             <div>
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">Payments Insight</h3>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Payments Insight</h3>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Approved amounts (7 days)</p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -370,7 +434,46 @@ function DashboardCharts({ chartData, showEngagementOnly = false, showPaymentsOn
         </div>
 
         <div className="flex-1">
-          <SimpleBarChart data={paymentsAmount} color="#22c55e" label="Approved amount" isCurrency={true} />
+          {paymentsData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <AreaChart data={paymentsData}>
+                <defs>
+                  <linearGradient id="colorPayments" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#22c55e" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#22c55e" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" className="dark:stroke-gray-700" />
+                <XAxis 
+                  dataKey="date" 
+                  stroke="#6b7280"
+                  tick={{ fill: '#6b7280' }}
+                  className="dark:text-gray-400"
+                />
+                <YAxis 
+                  stroke="#6b7280"
+                  tick={{ fill: '#6b7280' }}
+                  className="dark:text-gray-400"
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                    padding: '12px'
+                  }}
+                  formatter={(value) => formatRupiah(value)}
+                  className="dark:bg-gray-800 dark:border-gray-700"
+                />
+                <Legend />
+                <Area type="monotone" dataKey="amount" stroke="#22c55e" fillOpacity={1} fill="url(#colorPayments)" name="Approved Amount" />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-[300px] flex items-center justify-center text-gray-500 dark:text-gray-400">
+              <p>No chart data available</p>
+            </div>
+          )}
         </div>
 
         <div className="mt-3 text-xs text-gray-400 dark:text-gray-500">
@@ -380,27 +483,78 @@ function DashboardCharts({ chartData, showEngagementOnly = false, showPaymentsOn
     )
   }
 
-  // Default: Show both (for backward compatibility)
+  // Default: Show both (for backward compatibility) - menggunakan Recharts
+  const engagementData = registrations.map((reg, idx) => ({
+    date: reg.label,
+    registrations: reg.value,
+    completions: completions[idx]?.value || 0,
+  }))
+
+  const paymentsData = paymentsAmount.map((d) => ({
+    date: d.label,
+    amount: d.value,
+  }))
+
   return (
     <div className="space-y-6">
       {/* Engagement Trend Card */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 md:p-6">
-        <div className="mb-4">
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">Engagement Trend</h3>
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
+        <div className="mb-6">
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white">Engagement Trend</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Last 7 days</p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <SimpleAreaChart data={registrations} color="#6366f1" label="Registrations" height={160} />
-          <SimpleAreaChart data={completions} color="#22d3ee" label="Completions" height={160} />
-        </div>
+        {engagementData.length > 0 ? (
+          <ResponsiveContainer width="100%" height={300}>
+            <AreaChart data={engagementData}>
+              <defs>
+                <linearGradient id="colorRegistrationsDefault" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#6366f1" stopOpacity={0.8}/>
+                  <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                </linearGradient>
+                <linearGradient id="colorCompletionsDefault" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#22d3ee" stopOpacity={0.8}/>
+                  <stop offset="95%" stopColor="#22d3ee" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" className="dark:stroke-gray-700" />
+              <XAxis 
+                dataKey="date" 
+                stroke="#6b7280"
+                tick={{ fill: '#6b7280' }}
+                className="dark:text-gray-400"
+              />
+              <YAxis 
+                stroke="#6b7280"
+                tick={{ fill: '#6b7280' }}
+                className="dark:text-gray-400"
+              />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '8px',
+                  padding: '12px'
+                }}
+                className="dark:bg-gray-800 dark:border-gray-700"
+              />
+              <Legend />
+              <Area type="monotone" dataKey="registrations" stroke="#6366f1" fillOpacity={1} fill="url(#colorRegistrationsDefault)" name="Registrations" />
+              <Area type="monotone" dataKey="completions" stroke="#22d3ee" fillOpacity={1} fill="url(#colorCompletionsDefault)" name="Completions" />
+            </AreaChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="h-[300px] flex items-center justify-center text-gray-500 dark:text-gray-400">
+            <p>No chart data available</p>
+          </div>
+        )}
       </div>
 
       {/* Payments Insight Card */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 md:p-6">
-        <div className="mb-4">
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
+        <div className="mb-6">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
             <div>
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">Payments Insight</h3>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Payments Insight</h3>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Approved amounts (7 days)</p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -417,7 +571,46 @@ function DashboardCharts({ chartData, showEngagementOnly = false, showPaymentsOn
           </div>
         </div>
 
-        <SimpleBarChart data={paymentsAmount} color="#22c55e" label="Approved amount" isCurrency={true} />
+        {paymentsData.length > 0 ? (
+          <ResponsiveContainer width="100%" height={300}>
+            <AreaChart data={paymentsData}>
+              <defs>
+                <linearGradient id="colorPaymentsDefault" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#22c55e" stopOpacity={0.8}/>
+                  <stop offset="95%" stopColor="#22c55e" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" className="dark:stroke-gray-700" />
+              <XAxis 
+                dataKey="date" 
+                stroke="#6b7280"
+                tick={{ fill: '#6b7280' }}
+                className="dark:text-gray-400"
+              />
+              <YAxis 
+                stroke="#6b7280"
+                tick={{ fill: '#6b7280' }}
+                className="dark:text-gray-400"
+              />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '8px',
+                  padding: '12px'
+                }}
+                formatter={(value) => formatRupiah(value)}
+                className="dark:bg-gray-800 dark:border-gray-700"
+              />
+              <Legend />
+              <Area type="monotone" dataKey="amount" stroke="#22c55e" fillOpacity={1} fill="url(#colorPaymentsDefault)" name="Approved Amount" />
+            </AreaChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="h-[300px] flex items-center justify-center text-gray-500 dark:text-gray-400">
+            <p>No chart data available</p>
+          </div>
+        )}
 
         <div className="mt-3 text-xs text-gray-400 dark:text-gray-500">
           * Amounts are summed from approved payments per day.

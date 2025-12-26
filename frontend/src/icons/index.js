@@ -1,3 +1,8 @@
+/**
+ * @fincy-doc
+ * Ringkasan: File ini berisi kode aplikasi.
+ * Manfaat: Membantu memisahkan tanggung jawab dan memudahkan perawatan.
+ */
 // Icon exports using svgr - JavaScript compatible
 import { ReactComponent as PlusIcon } from "./plus.svg";
 import { ReactComponent as CloseIcon } from "./close.svg";

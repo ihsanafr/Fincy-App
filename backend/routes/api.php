@@ -1,5 +1,11 @@
 <?php
 
+/**
+ * @fincy-doc
+ * Ringkasan: File ini berisi kode backend.
+ * Manfaat: Menjaga logika server tetap terstruktur dan mudah dirawat.
+ */
+
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ModuleController;
 use App\Http\Controllers\Api\QuizController;
@@ -47,6 +53,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/modules/{id}/ratings', [ModuleRatingController::class, 'getRatings']);
     Route::post('/modules/{id}/ratings', [ModuleRatingController::class, 'submitRating']);
     Route::delete('/modules/{id}/ratings', [ModuleRatingController::class, 'deleteRating']);
+    Route::delete('/modules/{id}/ratings/{ratingId}', [ModuleRatingController::class, 'deleteRatingById']);
 
     // Module Bookmarks
     Route::post('/modules/{id}/bookmark', [ModuleBookmarkController::class, 'toggleBookmark']);
@@ -93,7 +100,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/finance-tools/budgets/{id}', [FinanceToolsController::class, 'updateBudget']);
         Route::delete('/finance-tools/budgets/{id}', [FinanceToolsController::class, 'deleteBudget']);
 
-    // Admin routes
+    // Admin routes (SUPER ADMIN only): pembayaran, user management, dan dashboard admin.
     Route::middleware('super_admin')->prefix('admin')->group(function () {
         // Dashboard
         Route::get('/dashboard/statistics', [AdminDashboardController::class, 'statistics']);
@@ -102,6 +109,24 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/dashboard/notifications', [AdminDashboardController::class, 'notifications']);
         Route::post('/dashboard/notifications/clear', [AdminDashboardController::class, 'clearNotifications']);
         Route::get('/dashboard/chart-data', [AdminDashboardController::class, 'chartData']);
+
+        // Payments
+        Route::get('/payments', [AdminPaymentController::class, 'index']);
+        Route::put('/payments/{id}/approve', [AdminPaymentController::class, 'approve']);
+        Route::put('/payments/{id}/reject', [AdminPaymentController::class, 'reject']);
+        Route::delete('/payments/{id}', [AdminPaymentController::class, 'destroy']);
+
+        // Users
+        Route::get('/users', [AdminUserController::class, 'index']);
+        Route::get('/users/{id}', [AdminUserController::class, 'show']);
+        Route::put('/users/{id}/role', [AdminUserController::class, 'updateRole']);
+        Route::delete('/users/{id}', [AdminUserController::class, 'destroy']);
+    });
+
+    // Staff routes (EDUCATOR + SUPER ADMIN): kontribusi modul/materi.
+    Route::middleware('staff')->prefix('admin')->group(function () {
+        // Moderasi rating/review (EDUCATOR + SUPER ADMIN)
+        Route::get('/ratings', [ModuleRatingController::class, 'getRecentRatings']);
 
         // Modules
         Route::get('/modules', [AdminModuleController::class, 'index']);
@@ -120,18 +145,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Content Image Upload
         Route::post('/content/upload-image', [AdminContentController::class, 'uploadImage']);
-
-        // Payments
-        Route::get('/payments', [AdminPaymentController::class, 'index']);
-        Route::put('/payments/{id}/approve', [AdminPaymentController::class, 'approve']);
-        Route::put('/payments/{id}/reject', [AdminPaymentController::class, 'reject']);
-        Route::delete('/payments/{id}', [AdminPaymentController::class, 'destroy']);
-
-        // Users
-        Route::get('/users', [AdminUserController::class, 'index']);
-        Route::get('/users/{id}', [AdminUserController::class, 'show']);
-        Route::put('/users/{id}/role', [AdminUserController::class, 'updateRole']);
-        Route::delete('/users/{id}', [AdminUserController::class, 'destroy']);
     });
 });
+
 

@@ -1,5 +1,11 @@
 <?php
 
+/**
+ * @fincy-doc
+ * Ringkasan: File ini berisi kode backend.
+ * Manfaat: Menjaga logika server tetap terstruktur dan mudah dirawat.
+ */
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -35,11 +41,25 @@ class User extends Authenticatable
     ];
 
     const ROLE_SUPER_ADMIN = 'super_admin';
+    const ROLE_EDUCATOR = 'educator';
     const ROLE_USER = 'user';
 
     public function isSuperAdmin()
     {
         return $this->role === self::ROLE_SUPER_ADMIN;
+    }
+
+    public function isEducator()
+    {
+        return $this->role === self::ROLE_EDUCATOR;
+    }
+
+    /**
+     * Role gabungan untuk akses staff (educator atau super admin).
+     */
+    public function isStaff()
+    {
+        return $this->isSuperAdmin() || $this->isEducator();
     }
 
     public function moduleProgress()
@@ -77,4 +97,5 @@ class User extends Authenticatable
         return $approvedSubscription !== null;
     }
 }
+
 

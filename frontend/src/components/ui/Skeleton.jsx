@@ -1,3 +1,8 @@
+/**
+ * @fincy-doc
+ * Ringkasan: File ini berisi kode aplikasi.
+ * Manfaat: Membantu memisahkan tanggung jawab dan memudahkan perawatan.
+ */
 function Skeleton({ className = '', variant = 'default' }) {
   const baseClasses = 'animate-pulse bg-gray-200 dark:bg-gray-700 rounded'
   

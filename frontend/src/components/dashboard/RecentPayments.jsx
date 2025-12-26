@@ -1,3 +1,8 @@
+/**
+ * @fincy-doc
+ * Ringkasan: File ini berisi kode aplikasi.
+ * Manfaat: Membantu memisahkan tanggung jawab dan memudahkan perawatan.
+ */
 import { Link } from 'react-router-dom'
 import Badge from '../ui/Badge'
 import { Table, TableHeader, TableBody, TableRow, TableCell } from '../ui/Table'

@@ -1,3 +1,8 @@
+/**
+ * @fincy-doc
+ * Ringkasan: Entry utama routing dan provider (theme/language/auth/modal/toast) untuk aplikasi.
+ * Manfaat: Semua route dan wrapper penting berada di satu tempat sehingga alur navigasi dan proteksi halaman konsisten.
+ */
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { SidebarProvider } from './contexts/SidebarContext'
@@ -14,15 +19,17 @@ import HomePage from './pages/HomePage'
 import LearningModulesPage from './pages/LearningModulesPage'
 import ModuleDetailPage from './pages/ModuleDetailPage'
 import FinanceToolsPage from './pages/FinanceToolsPage'
-import FinanceToolsDashboard from './pages/FinanceToolsDashboard'
-import FinanceToolsTransactions from './pages/FinanceToolsTransactions'
-import FinanceToolsBudgets from './pages/FinanceToolsBudgets'
-import FinanceToolsReports from './pages/FinanceToolsReports'
-import FinanceToolsCategories from './pages/FinanceToolsCategories'
+import FinanceToolsDashboard from './pages/finance-tools/FinanceToolsDashboard'
+import FinanceToolsTransactions from './pages/finance-tools/FinanceToolsTransactions'
+import FinanceToolsBudgets from './pages/finance-tools/FinanceToolsBudgets'
+import FinanceToolsReports from './pages/finance-tools/FinanceToolsReports'
+import FinanceToolsCategories from './pages/finance-tools/FinanceToolsCategories'
 import FinanceToolsLayout from './layout/FinanceToolsLayout'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import AdminDashboard from './pages/admin/AdminDashboard'
+import EducatorDashboard from './pages/admin/EducatorDashboard'
+import AdminRatings from './pages/admin/AdminRatings'
 import AdminModules from './pages/admin/AdminModules'
 import AdminModuleContents from './pages/admin/AdminModuleContents'
 import AdminQuiz from './pages/admin/AdminQuiz'
@@ -40,7 +47,14 @@ import UserGuidePage from './pages/UserGuidePage'
 import NotFoundPage from './pages/NotFoundPage'
 import ProtectedRoute from './components/ProtectedRoute'
 import AdminRoute from './components/AdminRoute'
+import StaffRoute from './components/StaffRoute'
 
+/**
+ * AppRoutes
+ *
+ * Ringkasan: Peta route utama aplikasi.
+ * Manfaat: Memusatkan aturan layout (Navbar/Footer/Admin/FinanceTools) dan proteksi halaman (auth/admin) agar konsisten.
+ */
 function AppRoutes() {
   const { user } = useAuth()
   const location = useLocation()
@@ -202,40 +216,66 @@ function AppRoutes() {
           </AdminRoute>
         }
       />
+
+      <Route
+        path="/admin/dashboard"
+        element={
+          <StaffRoute>
+            <SidebarProvider>
+              <AdminLayout>
+                <EducatorDashboard />
+              </AdminLayout>
+            </SidebarProvider>
+          </StaffRoute>
+        }
+      />
       <Route
         path="/admin/modules"
         element={
-          <AdminRoute>
+          <StaffRoute>
             <SidebarProvider>
               <AdminLayout>
                 <AdminModules />
               </AdminLayout>
             </SidebarProvider>
-          </AdminRoute>
+          </StaffRoute>
         }
       />
       <Route
         path="/admin/modules/:id/contents"
         element={
-          <AdminRoute>
+          <StaffRoute>
             <SidebarProvider>
               <AdminLayout>
                 <AdminModuleContents />
               </AdminLayout>
             </SidebarProvider>
-          </AdminRoute>
+          </StaffRoute>
         }
       />
       <Route
         path="/admin/modules/:id/quiz"
         element={
-          <AdminRoute>
+          <StaffRoute>
             <SidebarProvider>
               <AdminLayout>
                 <AdminQuiz />
               </AdminLayout>
             </SidebarProvider>
-          </AdminRoute>
+          </StaffRoute>
+        }
+      />
+
+      <Route
+        path="/admin/ratings"
+        element={
+          <StaffRoute>
+            <SidebarProvider>
+              <AdminLayout>
+                <AdminRatings />
+              </AdminLayout>
+            </SidebarProvider>
+          </StaffRoute>
         }
       />
       <Route
@@ -265,13 +305,13 @@ function AppRoutes() {
       <Route
         path="/admin/guide"
         element={
-          <AdminRoute>
+          <StaffRoute>
             <SidebarProvider>
               <AdminLayout>
                 <UserGuidePage />
               </AdminLayout>
             </SidebarProvider>
-          </AdminRoute>
+          </StaffRoute>
         }
       />
       <Route

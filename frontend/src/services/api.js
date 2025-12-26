@@ -1,3 +1,8 @@
+/**
+ * @fincy-doc
+ * Ringkasan: Client API (Axios) untuk seluruh frontend.
+ * Manfaat: Memusatkan konfigurasi request/response (token, header, dan handling 401) supaya semua pemanggilan API konsisten.
+ */
 import axios from 'axios'
 
 const api = axios.create({

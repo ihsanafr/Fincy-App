@@ -1,4 +1,9 @@
 /**
+ * @fincy-doc
+ * Ringkasan: File ini berisi kode aplikasi.
+ * Manfaat: Membantu memisahkan tanggung jawab dan memudahkan perawatan.
+ */
+/**
  * Format validation errors from Laravel API response
  * @param {Object} error - Axios error object
  * @returns {Object} Formatted error object with message and fields

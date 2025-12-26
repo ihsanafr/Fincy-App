@@ -1,5 +1,11 @@
 <?php
 
+/**
+ * @fincy-doc
+ * Ringkasan: File ini berisi kode backend.
+ * Manfaat: Menjaga logika server tetap terstruktur dan mudah dirawat.
+ */
+
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
@@ -32,7 +38,7 @@ class AdminUserController extends Controller
     public function updateRole(Request $request, $id)
     {
         $request->validate([
-            'role' => 'required|in:user,super_admin',
+            'role' => 'required|in:user,educator,super_admin',
         ]);
 
         $user = User::findOrFail($id);
@@ -76,4 +82,5 @@ class AdminUserController extends Controller
         ]);
     }
 }
+
 
