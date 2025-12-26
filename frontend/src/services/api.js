@@ -5,11 +5,16 @@
  */
 import axios from 'axios'
 
+// Get API URL from environment variable or use default
+const API_URL = import.meta.env.VITE_API_URL || '/api'
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: API_URL,
   headers: {
     'Accept': 'application/json',
+    'Content-Type': 'application/json',
   },
+  withCredentials: true, // Important for Sanctum authentication
 })
 
 // Add token to requests
