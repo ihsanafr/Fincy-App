@@ -233,7 +233,7 @@ function FinanceToolsDashboard() {
       )}
 
       {/* Hero Balance Card */}
-      <div className={`relative overflow-hidden rounded-2xl p-8 shadow-xl ${
+      <div className={`relative overflow-hidden rounded-2xl p-6 sm:p-8 shadow-xl ${
         isPositive
           ? 'bg-gradient-to-br from-purple-600 via-purple-700 to-indigo-700 dark:from-purple-800 dark:via-purple-900 dark:to-indigo-900'
           : 'bg-gradient-to-br from-red-600 via-red-700 to-pink-700 dark:from-red-800 dark:via-red-900 dark:to-pink-900'
@@ -241,19 +241,19 @@ function FinanceToolsDashboard() {
         <div className="absolute inset-0 bg-black/10"></div>
         <div className="relative z-10">
           <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="text-white/80 text-sm font-medium mb-2">Current Balance</p>
-              <h1 className="text-5xl font-bold text-white mb-2">
+            <div className="min-w-0 flex-1 pr-2 sm:pr-4">
+              <p className="text-white/80 text-xs sm:text-sm font-medium mb-2">Current Balance</p>
+              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-white mb-2 break-words leading-tight">
                 {formatRupiah(Math.abs(balance))}
               </h1>
-              <p className={`text-white/90 text-sm ${isPositive ? '' : 'font-semibold'}`}>
+              <p className={`text-white/90 text-xs sm:text-sm ${isPositive ? '' : 'font-semibold'}`}>
                 {isPositive ? '💰 Surplus this month' : '⚠️ Deficit this month'}
               </p>
             </div>
-            <div className={`w-24 h-24 rounded-full flex items-center justify-center bg-white/20 backdrop-blur-sm ${
+            <div className={`w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center bg-white/20 backdrop-blur-sm flex-shrink-0 ${
               isPositive ? 'animate-pulse' : ''
             }`}>
-              <svg className={`w-12 h-12 text-white ${isPositive ? '' : 'animate-bounce'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className={`w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-white ${isPositive ? '' : 'animate-bounce'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 {isPositive ? (
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                 ) : (

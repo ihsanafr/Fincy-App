@@ -121,10 +121,10 @@ function Navbar() {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Language Toggle */}
+            {/* Language Toggle - Hidden on mobile (will be in mobile menu), shown on desktop */}
             <button
               onClick={toggleLanguage}
-              className="flex items-center gap-1 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700"
+              className="hidden md:flex items-center gap-1 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700"
               title={language === 'id' ? 'Switch to English' : 'Ganti ke Bahasa Indonesia'}
             >
               <span className={language === 'id' ? 'font-semibold text-brand-600 dark:text-brand-400' : 'text-gray-400 dark:text-gray-500'}>
@@ -294,6 +294,33 @@ function Navbar() {
                 </svg>
                 {translations[language].navbar.financeTools}
               </Link>
+              
+              {/* Language Toggle - Mobile only */}
+              <div className="border-t border-gray-200 dark:border-gray-800 my-2"></div>
+              <button
+                onClick={() => {
+                  toggleLanguage()
+                  setShowMobileMenu(false)
+                }}
+                className="flex items-center justify-between gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors font-medium w-full"
+              >
+                <div className="flex items-center gap-3">
+                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+                  </svg>
+                  <span>Language</span>
+                </div>
+                <div className="flex items-center gap-1 text-sm">
+                  <span className={language === 'id' ? 'font-semibold text-brand-600 dark:text-brand-400' : 'text-gray-400 dark:text-gray-500'}>
+                    IND
+                  </span>
+                  <span className="text-gray-300 dark:text-gray-600">-</span>
+                  <span className={language === 'en' ? 'font-semibold text-brand-600 dark:text-brand-400' : 'text-gray-400 dark:text-gray-500'}>
+                    ENG
+                  </span>
+                </div>
+              </button>
+              
               {user && (
                 <>
                   <div className="border-t border-gray-200 dark:border-gray-800 my-2"></div>
