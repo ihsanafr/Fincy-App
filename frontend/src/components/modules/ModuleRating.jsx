@@ -1,3 +1,8 @@
+/**
+ * @fincy-doc
+ * Ringkasan: File ini berisi kode aplikasi.
+ * Manfaat: Membantu memisahkan tanggung jawab dan memudahkan perawatan.
+ */
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useModal } from '../../contexts/ModalContext'
@@ -7,7 +12,7 @@ import Skeleton from '../ui/Skeleton'
 
 function ModuleRating({ moduleId }) {
   const { user } = useAuth()
-  const { showAlert } = useModal()
+  const { showAlert, showConfirm } = useModal()
   const { showToast } = useToast()
   const [ratings, setRatings] = useState([])
   const [averageRating, setAverageRating] = useState(0)
@@ -78,14 +83,16 @@ function ModuleRating({ moduleId }) {
   const handleDeleteRating = async () => {
     if (!userRating) return
 
-    showAlert({
-      type: 'confirm',
-      title: 'Delete Rating',
-      message: 'Are you sure you want to delete your rating?',
+    showConfirm({
+      title: 'Hapus Rating',
+      message: 'Yakin ingin menghapus rating kamu?',
+      type: 'warning',
+      confirmText: 'Hapus',
+      cancelText: 'Batal',
       onConfirm: async () => {
         try {
           await api.delete(`/modules/${moduleId}/ratings`)
-          showToast({ type: 'success', message: 'Rating deleted successfully!' })
+          showToast({ type: 'success', message: 'Rating berhasil dihapus!' })
           setUserRating(null)
           setShowRatingForm(false)
           fetchRatings()
@@ -93,7 +100,33 @@ function ModuleRating({ moduleId }) {
           showAlert({
             type: 'error',
             title: 'Error',
-            message: 'Failed to delete rating',
+            message: 'Gagal menghapus rating',
+          })
+        }
+      },
+    })
+  }
+
+  const isModerator = user && (user.role === 'super_admin' || user.role === 'educator')
+
+  const handleModerateDelete = async (ratingId) => {
+    if (!isModerator) return
+    showConfirm({
+      title: 'Hapus Komentar',
+      message: 'Komentar ini akan dihapus dari modul. Lanjutkan?',
+      type: 'warning',
+      confirmText: 'Hapus',
+      cancelText: 'Batal',
+      onConfirm: async () => {
+        try {
+          await api.delete(`/modules/${moduleId}/ratings/${ratingId}`)
+          showToast({ type: 'success', message: 'Komentar berhasil dihapus!' })
+          fetchRatings()
+        } catch (error) {
+          showAlert({
+            type: 'error',
+            title: 'Error',
+            message: error.response?.data?.message || 'Gagal menghapus komentar',
           })
         }
       },
@@ -288,6 +321,15 @@ function ModuleRating({ moduleId }) {
                         </span>
                       </div>
                     </div>
+                    {isModerator && (
+                      <button
+                        onClick={() => handleModerateDelete(ratingItem.id)}
+                        className="px-3 py-1.5 text-xs font-semibold bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                        title="Hapus komentar (moderasi)"
+                      >
+                        Hapus
+                      </button>
+                    )}
                   </div>
                   {ratingItem.review && (
                     <p className="text-gray-700 dark:text-gray-300 mt-2">

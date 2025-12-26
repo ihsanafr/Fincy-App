@@ -1,3 +1,8 @@
+/**
+ * @fincy-doc
+ * Ringkasan: File ini berisi kode aplikasi.
+ * Manfaat: Membantu memisahkan tanggung jawab dan memudahkan perawatan.
+ */
 import { useState, useEffect } from 'react'
 import { formatRupiahInput, parseRupiahInput } from '../../utils/currency'
 
@@ -12,16 +17,44 @@ function TransactionModal({ isOpen, onClose, editingTransaction, categories, onS
   })
 
   useEffect(() => {
-    if (editingTransaction) {
+    if (editingTransaction && isOpen) {
+      // Parse amount: pastikan selalu number murni (bukan string yang sudah diformat)
+      let amountValue = ''
+      if (editingTransaction.amount !== null && editingTransaction.amount !== undefined) {
+        // Konversi ke number dulu, kemudian ke string number murni
+        // Ini untuk memastikan tidak ada formatting yang tersisa
+        const rawAmount = Number(editingTransaction.amount)
+        if (!isNaN(rawAmount) && rawAmount > 0) {
+          // Simpan sebagai string number murni (tanpa formatting)
+          amountValue = String(Math.floor(Math.abs(rawAmount)))
+        }
+      }
+      
+      // Format tanggal untuk input date (yyyy-mm-dd)
+      let formattedDate = new Date().toISOString().split('T')[0]
+      if (editingTransaction.transaction_date) {
+        try {
+          // Konversi berbagai format tanggal ke yyyy-mm-dd
+          const date = new Date(editingTransaction.transaction_date)
+          if (!isNaN(date.getTime())) {
+            formattedDate = date.toISOString().split('T')[0]
+          }
+        } catch (e) {
+          // Jika gagal parse, gunakan tanggal hari ini
+          formattedDate = new Date().toISOString().split('T')[0]
+        }
+      }
+      
       setFormData({
         category_id: editingTransaction.category_id || '',
         type: editingTransaction.type || 'expense',
-        amount: editingTransaction.amount || '',
+        amount: amountValue,
         description: editingTransaction.description || '',
-        transaction_date: editingTransaction.transaction_date || new Date().toISOString().split('T')[0],
+        transaction_date: formattedDate,
         notes: editingTransaction.notes || '',
       })
-    } else {
+    } else if (!editingTransaction && isOpen) {
+      // Reset form saat modal dibuka tanpa editingTransaction
       setFormData({
         category_id: '',
         type: 'expense',
@@ -31,7 +64,7 @@ function TransactionModal({ isOpen, onClose, editingTransaction, categories, onS
         notes: '',
       })
     }
-  }, [editingTransaction, isOpen])
+  }, [editingTransaction?.id, isOpen])
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -251,16 +284,40 @@ function TransactionModal({ isOpen, onClose, editingTransaction, categories, onS
                       </span>
                       <input
                         type="text"
-                        value={formData.amount ? formatRupiahInput(formData.amount.toString()) : ''}
+                        value={formData.amount ? formatRupiahInput(String(formData.amount)) : ''}
                         onChange={(e) => {
-                          const parsed = parseRupiahInput(e.target.value)
-                          setFormData({ ...formData, amount: parsed > 0 ? parsed.toString() : '' })
+                          // Parse input yang sudah diformat, simpan sebagai string number murni
+                          const inputValue = e.target.value
+                          // Pastikan parse hanya sekali, tidak double parse
+                          // parseRupiahInput akan remove semua non-numeric dan return number
+                          const parsed = parseRupiahInput(inputValue)
+                          // Validasi: pastikan tidak ada double parsing dan pastikan integer
+                          const finalAmount = parsed > 0 ? Math.floor(parsed) : 0
+                          // Simpan sebagai string number murni (tanpa formatting) - ini penting!
+                          // Jangan simpan sebagai formatted string, karena akan double format
+                          setFormData(prev => {
+                            // Pastikan tidak ada double format dengan memastikan amount selalu number murni
+                            const newAmount = finalAmount > 0 ? String(finalAmount) : ''
+                            // Hanya update jika berbeda untuk mencegah unnecessary re-render
+                            if (prev.amount !== newAmount) {
+                              return { ...prev, amount: newAmount }
+                            }
+                            return prev
+                          })
                         }}
                         onBlur={(e) => {
-                          const parsed = parseRupiahInput(e.target.value)
-                          if (parsed > 0) {
-                            setFormData({ ...formData, amount: parsed.toString() })
-                          }
+                          // Pastikan value selalu number murni saat blur
+                          const inputValue = e.target.value
+                          const parsed = parseRupiahInput(inputValue)
+                          const finalAmount = parsed > 0 ? Math.floor(parsed) : 0
+                          // Pastikan tidak ada double format
+                          setFormData(prev => {
+                            const newAmount = finalAmount > 0 ? String(finalAmount) : ''
+                            if (prev.amount !== newAmount) {
+                              return { ...prev, amount: newAmount }
+                            }
+                            return prev
+                          })
                         }}
                         required
                         className="w-full pl-12 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all relative z-0"

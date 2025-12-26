@@ -1,3 +1,8 @@
+/**
+ * @fincy-doc
+ * Ringkasan: File ini berisi kode aplikasi.
+ * Manfaat: Membantu memisahkan tanggung jawab dan memudahkan perawatan.
+ */
 import { useState, useEffect } from 'react'
 import { formatRupiahInput, parseRupiahInput } from '../../utils/currency'
 
@@ -11,15 +16,53 @@ function BudgetModal({ isOpen, onClose, editingBudget, categories, onSubmit, isL
   })
 
   useEffect(() => {
-    if (editingBudget) {
+    if (editingBudget && isOpen) {
+      // Parse amount: pastikan selalu number murni (bukan string yang sudah diformat)
+      let amountValue = ''
+      if (editingBudget.amount !== null && editingBudget.amount !== undefined) {
+        // Konversi ke number dulu, kemudian ke string number murni
+        const rawAmount = Number(editingBudget.amount)
+        if (!isNaN(rawAmount) && rawAmount > 0) {
+          // Simpan sebagai string number murni (tanpa formatting)
+          amountValue = String(Math.floor(Math.abs(rawAmount)))
+        }
+      }
+      
+      // Format tanggal untuk input date (yyyy-mm-dd)
+      let formattedStartDate = new Date().toISOString().split('T')[0]
+      let formattedEndDate = new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0]
+      
+      if (editingBudget.start_date) {
+        try {
+          const date = new Date(editingBudget.start_date)
+          if (!isNaN(date.getTime())) {
+            formattedStartDate = date.toISOString().split('T')[0]
+          }
+        } catch (e) {
+          formattedStartDate = new Date().toISOString().split('T')[0]
+        }
+      }
+      
+      if (editingBudget.end_date) {
+        try {
+          const date = new Date(editingBudget.end_date)
+          if (!isNaN(date.getTime())) {
+            formattedEndDate = date.toISOString().split('T')[0]
+          }
+        } catch (e) {
+          formattedEndDate = new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0]
+        }
+      }
+      
       setFormData({
         category_id: editingBudget.category_id || '',
-        amount: editingBudget.amount || '',
-        start_date: editingBudget.start_date || new Date().toISOString().split('T')[0],
-        end_date: editingBudget.end_date || new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0],
+        amount: amountValue,
+        start_date: formattedStartDate,
+        end_date: formattedEndDate,
         period: editingBudget.period || 'monthly',
       })
-    } else {
+    } else if (!editingBudget && isOpen) {
+      // Reset form saat modal dibuka tanpa editingBudget
       setFormData({
         category_id: '',
         amount: '',
@@ -28,7 +71,7 @@ function BudgetModal({ isOpen, onClose, editingBudget, categories, onSubmit, isL
         period: 'monthly',
       })
     }
-  }, [editingBudget, isOpen])
+  }, [editingBudget?.id, isOpen])
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -119,16 +162,34 @@ function BudgetModal({ isOpen, onClose, editingBudget, categories, onSubmit, isL
                       </span>
                       <input
                         type="text"
-                        value={formData.amount ? formatRupiahInput(formData.amount.toString()) : ''}
+                        value={formData.amount ? formatRupiahInput(String(formData.amount)) : ''}
                         onChange={(e) => {
-                          const parsed = parseRupiahInput(e.target.value)
-                          setFormData({ ...formData, amount: parsed > 0 ? parsed.toString() : '' })
+                          // Parse input yang sudah diformat, simpan sebagai string number murni
+                          const inputValue = e.target.value
+                          const parsed = parseRupiahInput(inputValue)
+                          const finalAmount = parsed > 0 ? Math.floor(parsed) : 0
+                          // Simpan sebagai string number murni (tanpa formatting)
+                          setFormData(prev => {
+                            const newAmount = finalAmount > 0 ? String(finalAmount) : ''
+                            // Hanya update jika berbeda untuk mencegah unnecessary re-render
+                            if (prev.amount !== newAmount) {
+                              return { ...prev, amount: newAmount }
+                            }
+                            return prev
+                          })
                         }}
                         onBlur={(e) => {
-                          const parsed = parseRupiahInput(e.target.value)
-                          if (parsed > 0) {
-                            setFormData({ ...formData, amount: parsed.toString() })
-                          }
+                          // Pastikan value selalu number murni saat blur
+                          const inputValue = e.target.value
+                          const parsed = parseRupiahInput(inputValue)
+                          const finalAmount = parsed > 0 ? Math.floor(parsed) : 0
+                          setFormData(prev => {
+                            const newAmount = finalAmount > 0 ? String(finalAmount) : ''
+                            if (prev.amount !== newAmount) {
+                              return { ...prev, amount: newAmount }
+                            }
+                            return prev
+                          })
                         }}
                         required
                         className="w-full pl-12 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all relative z-0"

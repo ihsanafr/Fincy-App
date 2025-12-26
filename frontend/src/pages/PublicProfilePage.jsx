@@ -1,8 +1,11 @@
+/**
+ * @fincy-doc
+ * Ringkasan: File ini berisi kode aplikasi.
+ * Manfaat: Membantu memisahkan tanggung jawab dan memudahkan perawatan.
+ */
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import api from '../services/api'
-import SocialShare from '../components/sharing/SocialShare'
-import QRCodeShare from '../components/sharing/QRCodeShare'
 
 function PublicProfilePage() {
   const { slug } = useParams()

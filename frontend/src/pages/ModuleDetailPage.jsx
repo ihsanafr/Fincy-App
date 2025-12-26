@@ -1,3 +1,8 @@
+/**
+ * @fincy-doc
+ * Ringkasan: File ini berisi kode aplikasi.
+ * Manfaat: Membantu memisahkan tanggung jawab dan memudahkan perawatan.
+ */
 import { useEffect, useState, useRef } from 'react'
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
@@ -135,7 +140,6 @@ function ModuleDetailPage() {
       const response = await api.get(`/modules/${id}`, {
         params: { _t: Date.now() }
       })
-      console.log('Module data:', response.data) // Debug log
       setModule(response.data.module)
       
       // Set completion status from backend

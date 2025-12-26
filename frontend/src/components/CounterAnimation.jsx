@@ -1,3 +1,8 @@
+/**
+ * @fincy-doc
+ * Ringkasan: File ini berisi kode aplikasi.
+ * Manfaat: Membantu memisahkan tanggung jawab dan memudahkan perawatan.
+ */
 import { useEffect, useState, useRef } from 'react'
 
 function CounterAnimation({ end, duration = 2000, suffix = '', prefix = '' }) {

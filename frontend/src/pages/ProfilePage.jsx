@@ -1,3 +1,8 @@
+/**
+ * @fincy-doc
+ * Ringkasan: File ini berisi kode aplikasi.
+ * Manfaat: Membantu memisahkan tanggung jawab dan memudahkan perawatan.
+ */
 import { useEffect, useState, useRef } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useModal } from '../contexts/ModalContext'
@@ -187,10 +192,6 @@ function ProfilePage() {
   // Hanya menampilkan certificates yang sudah menyelesaikan quiz dan mendapat sertifikat
   const allPortfolioItems = profile.portfolio.certificates
     .map(cert => {
-      // Pastikan public_link ada
-      if (!cert.public_link) {
-        console.warn('Certificate missing public_link:', cert)
-      }
       return {
         ...cert,
         type: 'certificate',
@@ -484,8 +485,6 @@ function ProfilePage() {
                         linkTo = pathMatch[1]
                       }
                     }
-                  } else {
-                    console.warn('Certificate missing public_link:', item)
                   }
                 }
                 

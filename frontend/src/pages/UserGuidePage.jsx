@@ -1,10 +1,18 @@
+/**
+ * @fincy-doc
+ * Ringkasan: File ini berisi kode aplikasi.
+ * Manfaat: Membantu memisahkan tanggung jawab dan memudahkan perawatan.
+ */
 import { useState } from 'react'
 import { useLocation } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
 
 function UserGuidePage() {
   const location = useLocation()
   const [language, setLanguage] = useState('id') // 'id' for Indonesian, 'en' for English
   const isAdmin = location.pathname.includes('/admin')
+  const { user } = useAuth()
+  const isEducator = user?.role === 'educator'
 
   const adminGuide = {
     id: {
@@ -54,6 +62,67 @@ function UserGuidePage() {
         {
           title: 'Tips & Tricks',
           content: '💡 Use the search bar to quickly find data\n💡 Click column headers to sort tables (ascending/descending)\n💡 Hover over charts for detailed information\n💡 Notifications in the top right will notify you of pending payments or new users\n💡 Approved modules cannot be deleted to keep data safe',
+        },
+      ],
+    },
+  }
+
+  const educatorGuide = {
+    id: {
+      title: 'Panduan Dashboard Educator',
+      sections: [
+        {
+          title: 'Dashboard Educator',
+          content: 'Di dashboard educator kamu bisa lihat ringkasan modul/materi/quiz, serta moderasi rating & review terbaru. Dashboard ini dibuat ringan tanpa chart yang tidak diperlukan.',
+        },
+        {
+          title: 'Learning Modules',
+          content: 'Buat dan kelola modul pembelajaran. Kamu bisa edit judul/isi modul, aktif/nonaktifkan modul, serta kelola materi dan quiz. Tips: gunakan search dan sorting untuk mempercepat pencarian modul.',
+        },
+        {
+          title: 'Learning Materials',
+          content: 'Tambahkan materi (video/artikel) pada modul. Pastikan urutan materi rapi agar alur belajar jelas. Gunakan upload image jika diperlukan untuk konten.',
+        },
+        {
+          title: 'Manage Quiz',
+          content: 'Kelola soal quiz untuk modul: tambah, edit, dan pastikan jawaban benar + penjelasan sudah sesuai. Jika kamu mengubah soal, cek kembali penjelasan agar tidak membingungkan peserta.',
+        },
+        {
+          title: 'Moderasi Rating & Review',
+          content: 'Educator dapat menghapus rating/review yang tidak pantas. Dari dashboard, kamu bisa lihat review terbaru dan klik “Hapus” untuk moderasi.',
+        },
+        {
+          title: 'Tips & Trik',
+          content: '💡 Buat struktur modul yang konsisten (judul, tujuan, materi, quiz)\n💡 Gunakan penjelasan jawaban yang jelas untuk meningkatkan pemahaman\n💡 Moderasi review yang spam/tidak relevan agar kualitas komunitas terjaga',
+        },
+      ],
+    },
+    en: {
+      title: 'Educator Dashboard Guide',
+      sections: [
+        {
+          title: 'Educator Dashboard',
+          content: 'On the educator dashboard you can see quick module/material/quiz stats and the latest rating & review moderation. It’s intentionally lightweight without unnecessary charts.',
+        },
+        {
+          title: 'Learning Modules',
+          content: 'Create and manage learning modules. You can edit module content, toggle active status, and manage materials & quizzes. Tip: use search and sorting to find modules faster.',
+        },
+        {
+          title: 'Learning Materials',
+          content: 'Add materials (videos/articles) to a module. Keep a clean order so the learning flow is clear. Use image upload when needed for content.',
+        },
+        {
+          title: 'Manage Quiz',
+          content: 'Manage quiz questions for a module: add, edit, and ensure the correct answer + explanation are accurate. If you change questions, review explanations to avoid confusion.',
+        },
+        {
+          title: 'Rating & Review Moderation',
+          content: 'Educators can delete inappropriate ratings/reviews. From the dashboard, you can review the latest feedback and click “Delete” for moderation.',
+        },
+        {
+          title: 'Tips & Tricks',
+          content: '💡 Keep a consistent module structure (title, goals, materials, quiz)\n💡 Write clear explanations to improve understanding\n💡 Moderate spam/irrelevant reviews to maintain community quality',
         },
       ],
     },
@@ -120,10 +189,29 @@ function UserGuidePage() {
     },
   }
 
-  const guide = isAdmin ? adminGuide[language] : financeGuide[language]
-  const bgColor = isAdmin ? 'bg-brand-50 dark:bg-brand-900/10' : 'bg-purple-50 dark:bg-purple-900/10'
-  const textColor = isAdmin ? 'text-brand-600 dark:text-brand-400' : 'text-purple-600 dark:text-purple-400'
-  const borderColor = isAdmin ? 'border-brand-200 dark:border-brand-800' : 'border-purple-200 dark:border-purple-800'
+  const guide = isAdmin
+    ? (isEducator ? educatorGuide[language] : adminGuide[language])
+    : financeGuide[language]
+
+  const themeType = isAdmin ? (isEducator ? 'educator' : 'admin') : 'finance'
+  const bgColor =
+    themeType === 'finance'
+      ? 'bg-purple-50 dark:bg-purple-900/10'
+      : themeType === 'educator'
+        ? 'bg-emerald-50 dark:bg-emerald-900/10'
+        : 'bg-brand-50 dark:bg-brand-900/10'
+  const textColor =
+    themeType === 'finance'
+      ? 'text-purple-600 dark:text-purple-400'
+      : themeType === 'educator'
+        ? 'text-emerald-600 dark:text-emerald-400'
+        : 'text-brand-600 dark:text-brand-400'
+  const borderColor =
+    themeType === 'finance'
+      ? 'border-purple-200 dark:border-purple-800'
+      : themeType === 'educator'
+        ? 'border-emerald-200 dark:border-emerald-800'
+        : 'border-brand-200 dark:border-brand-800'
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">

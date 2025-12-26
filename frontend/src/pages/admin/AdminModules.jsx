@@ -1,3 +1,8 @@
+/**
+ * @fincy-doc
+ * Ringkasan: File ini berisi kode aplikasi.
+ * Manfaat: Membantu memisahkan tanggung jawab dan memudahkan perawatan.
+ */
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../../services/api'
@@ -396,17 +401,6 @@ function ModuleForm({ editingModule, onSuccess, onCancel }) {
           submitData.append('thumbnail', thumbnail)
         }
         
-        // Debug: log FormData contents
-        console.log('Updating module:', {
-          id: editingModule.id,
-          formData: formData
-        })
-        
-        // Debug: log all FormData entries
-        for (let pair of submitData.entries()) {
-          console.log('FormData:', pair[0], '=', pair[1])
-        }
-
         // IMPORTANT: Use POST + _method=PUT for multipart/form-data.
         // PHP/Laravel often won't parse multipart bodies on real PUT requests.
         submitData.append('_method', 'PUT')

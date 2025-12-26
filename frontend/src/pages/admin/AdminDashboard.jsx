@@ -1,3 +1,8 @@
+/**
+ * @fincy-doc
+ * Ringkasan: File ini berisi kode aplikasi.
+ * Manfaat: Membantu memisahkan tanggung jawab dan memudahkan perawatan.
+ */
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../../services/api'
@@ -9,6 +14,7 @@ import RecentUsers from '../../components/dashboard/RecentUsers'
 import RecentPayments from '../../components/dashboard/RecentPayments'
 import QuickStats from '../../components/dashboard/QuickStats'
 import DashboardCharts from '../../components/dashboard/DashboardCharts'
+import RatingsModerationPanel from '../../components/dashboard/RatingsModerationPanel'
 
 function AdminDashboard() {
   const { showAlert, showInput, showValidation } = useModal()
@@ -119,6 +125,14 @@ function AdminDashboard() {
     <div className="space-y-6">
       {/* Breadcrumbs */}
       <Breadcrumbs items={breadcrumbs} />
+
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
+        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+          Ringkasan sistem dan aktivitas terbaru untuk memantau platform.
+        </p>
+      </div>
       {/* Metrics Cards - Full Width */}
       <DashboardMetrics statistics={statistics} />
 
@@ -154,6 +168,9 @@ function AdminDashboard() {
           />
         </div>
       </div>
+
+      {/* Ratings Moderation */}
+      <RatingsModerationPanel />
     </div>
   )
 }

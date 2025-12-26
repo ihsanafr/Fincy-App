@@ -1,3 +1,8 @@
+/**
+ * @fincy-doc
+ * Ringkasan: File ini berisi kode aplikasi.
+ * Manfaat: Membantu memisahkan tanggung jawab dan memudahkan perawatan.
+ */
 const Table = ({ children, className = '' }) => {
   return (
     <table className={`min-w-full divide-y divide-gray-200 dark:divide-gray-800 ${className}`}>

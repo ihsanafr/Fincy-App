@@ -1,9 +1,14 @@
+/**
+ * @fincy-doc
+ * Ringkasan: File ini berisi kode aplikasi.
+ * Manfaat: Membantu memisahkan tanggung jawab dan memudahkan perawatan.
+ */
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
 function UserGuide({ type = 'admin' }) {
   const [isOpen, setIsOpen] = useState(false)
-  const guidePath = type === 'admin' ? '/admin/guide' : '/finance-tools/guide'
+  const guidePath = type === 'finance' ? '/finance-tools/guide' : '/admin/guide'
 
   const adminGuide = [
     {
@@ -55,10 +60,25 @@ function UserGuide({ type = 'admin' }) {
     },
   ]
 
-  const guideItems = type === 'admin' ? adminGuide : financeGuide
-  const iconColor = type === 'admin' ? 'text-brand-600 dark:text-brand-400' : 'text-purple-600 dark:text-purple-400'
-  const bgColor = type === 'admin' ? 'bg-brand-50 dark:bg-brand-900/20' : 'bg-purple-50 dark:bg-purple-900/20'
-  const borderColor = type === 'admin' ? 'border-brand-200 dark:border-brand-800' : 'border-purple-200 dark:border-purple-800'
+  const guideItems = type === 'finance' ? financeGuide : adminGuide
+  const iconColor =
+    type === 'finance'
+      ? 'text-purple-600 dark:text-purple-400'
+      : type === 'educator'
+        ? 'text-emerald-600 dark:text-emerald-400'
+        : 'text-brand-600 dark:text-brand-400'
+  const bgColor =
+    type === 'finance'
+      ? 'bg-purple-50 dark:bg-purple-900/20'
+      : type === 'educator'
+        ? 'bg-emerald-50 dark:bg-emerald-900/20'
+        : 'bg-brand-50 dark:bg-brand-900/20'
+  const borderColor =
+    type === 'finance'
+      ? 'border-purple-200 dark:border-purple-800'
+      : type === 'educator'
+        ? 'border-emerald-200 dark:border-emerald-800'
+        : 'border-brand-200 dark:border-brand-800'
 
   return (
     <div className="border-t border-gray-200 dark:border-gray-800 mt-auto">

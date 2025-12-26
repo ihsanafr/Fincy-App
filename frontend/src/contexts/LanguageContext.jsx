@@ -1,3 +1,8 @@
+/**
+ * @fincy-doc
+ * Ringkasan: Context untuk mengatur bahasa aplikasi (IND/ENG).
+ * Manfaat: Menyimpan pilihan bahasa secara global dan persist ke localStorage agar bahasa tetap sama saat refresh.
+ */
 import { createContext, useContext, useState, useEffect } from 'react'
 
 const LanguageContext = createContext()

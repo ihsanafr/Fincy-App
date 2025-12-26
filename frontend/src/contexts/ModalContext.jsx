@@ -1,3 +1,8 @@
+/**
+ * @fincy-doc
+ * Ringkasan: Context untuk menampilkan modal standar (alert/confirm/input/validasi).
+ * Manfaat: Menghindari `alert()` yang tidak konsisten dan memusatkan UX modal agar seragam di semua halaman.
+ */
 import { createContext, useContext, useState } from 'react'
 import AlertModal from '../components/ui/AlertModal'
 import ConfirmModal from '../components/ui/ConfirmModal'
@@ -13,18 +18,22 @@ export function ModalProvider({ children }) {
   const [inputModal, setInputModal] = useState({ isOpen: false, title: '', message: '', placeholder: '', onConfirm: null, type: 'text', initialValue: '', isLoading: false })
   const [validationModal, setValidationModal] = useState({ isOpen: false, title: '', errors: '', fields: {} })
 
+  /** Show a simple alert modal (info/success/warning/error). */
   const showAlert = ({ type = 'info', title, message, onConfirm }) => {
     setAlertModal({ isOpen: true, type, title, message, onConfirm })
   }
 
+  /** Show a confirm modal; caller provides the action callback via `onConfirm`. */
   const showConfirm = ({ title = 'Confirm Action', message, onConfirm, type = 'warning', isLoading = false }) => {
     setConfirmModal({ isOpen: true, title, message, onConfirm, type, isLoading })
   }
 
+  /** Show an input modal; returns the value via `onConfirm`. */
   const showInput = ({ title = 'Input Required', message, placeholder = 'Enter value...', onConfirm, type = 'text', initialValue = '', isLoading = false }) => {
     setInputModal({ isOpen: true, title, message, placeholder, onConfirm, type, initialValue, isLoading })
   }
 
+  /** Show a validation modal by extracting human readable messages from an API error response. */
   const showValidation = ({ title = 'Validation Error', error }) => {
     const validation = formatValidationErrors(error)
     setValidationModal({
