@@ -46,10 +46,15 @@ function LearningModulesPage() {
   const fetchModules = async () => {
     try {
       const response = await api.get('/modules')
-      setModules(response.data)
-      setFilteredModules(response.data)
+      // Ensure response.data is always an array
+      const modulesData = Array.isArray(response.data) ? response.data : []
+      setModules(modulesData)
+      setFilteredModules(modulesData)
     } catch (error) {
       console.error('Error fetching modules:', error)
+      // Set empty array on error to prevent map errors
+      setModules([])
+      setFilteredModules([])
     } finally {
       setLoading(false)
     }
@@ -57,6 +62,12 @@ function LearningModulesPage() {
 
   // Filter and sort modules
   useEffect(() => {
+    // Ensure modules is always an array
+    if (!Array.isArray(modules)) {
+      setFilteredModules([])
+      return
+    }
+
     let filtered = [...modules]
 
     // Search filter
@@ -64,9 +75,9 @@ function LearningModulesPage() {
       const query = searchQuery.toLowerCase()
       filtered = filtered.filter(
         (module) =>
-          module.title?.toLowerCase().includes(query) ||
-          module.description?.toLowerCase().includes(query) ||
-          module.category?.toLowerCase().includes(query)
+          module?.title?.toLowerCase().includes(query) ||
+          module?.description?.toLowerCase().includes(query) ||
+          module?.category?.toLowerCase().includes(query)
       )
     }
 
@@ -74,12 +85,12 @@ function LearningModulesPage() {
     filtered.sort((a, b) => {
       switch (sortBy) {
         case 'oldest':
-          return new Date(a.created_at) - new Date(b.created_at)
+          return new Date(a?.created_at || 0) - new Date(b?.created_at || 0)
         case 'title':
-          return a.title.localeCompare(b.title)
+          return (a?.title || '').localeCompare(b?.title || '')
         case 'newest':
         default:
-          return new Date(b.created_at) - new Date(a.created_at)
+          return new Date(b?.created_at || 0) - new Date(a?.created_at || 0)
       }
     })
 
@@ -270,7 +281,7 @@ function LearningModulesPage() {
                         <Badge color="info" variant="light" size="sm">
                           {module.category || 'General'}
                         </Badge>
-                        {module.contents && module.contents.length > 0 && (
+                        {module.contents && Array.isArray(module.contents) && module.contents.length > 0 && (
                           <button
                             onClick={() => toggleDropdown(module.id)}
                             className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
@@ -299,13 +310,13 @@ function LearningModulesPage() {
                     </p>
 
                     {/* Dropdown Menu */}
-                    {openDropdowns[module.id] && module.contents && module.contents.length > 0 && (
+                    {openDropdowns[module.id] && module.contents && Array.isArray(module.contents) && module.contents.length > 0 && (
                       <div className="mb-4 p-4 bg-gradient-to-br from-gray-50 to-brand-50/50 dark:from-gray-700/50 dark:to-brand-900/20 rounded-2xl border border-gray-200 dark:border-gray-600 animate-slideDown overflow-hidden">
                         <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wide">
                           Learning Materials ({module.contents.length})
                         </p>
                         <div className="space-y-2 max-h-64 overflow-y-auto overflow-x-hidden custom-scrollbar">
-                          {module.contents.map((content, index) => (
+                          {Array.isArray(module.contents) && module.contents.map((content, index) => (
                             <Link
                               key={content.id}
                               to={`/learning-modules/${module.id}#content-${content.id}`}
