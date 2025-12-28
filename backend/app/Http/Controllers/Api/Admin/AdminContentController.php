@@ -23,7 +23,7 @@ class AdminContentController extends Controller
         $image = $request->file('image');
         $path = $image->store('content_images', 'public');
 
-        $url = Storage::disk('public')->url($path);
+        $url = storage_url($path);
 
         return response()->json([
             'url' => $url,

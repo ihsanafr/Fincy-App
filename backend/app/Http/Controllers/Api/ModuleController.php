@@ -28,65 +28,73 @@ class ModuleController extends Controller
     {
         $moduleArray = $module->toArray();
         if ($module->thumbnail) {
-            $moduleArray['thumbnail_url'] = asset('storage/' . $module->thumbnail);
+            $moduleArray['thumbnail_url'] = storage_url($module->thumbnail);
         }
         return $moduleArray;
     }
 
     public function index()
     {
-        $modules = Module::where('is_active', true)
-            ->with(['contents' => function($query) {
-                $query->orderBy('order');
-            }])
-            ->orderBy('order')
-            ->get();
+        try {
+            $modules = Module::where('is_active', true)
+                ->with(['contents' => function($query) {
+                    $query->orderBy('order');
+                }])
+                ->orderBy('order')
+                ->get();
 
-        $user = Auth::user();
-        
-        $formattedModules = $modules->map(function($module) use ($user) {
-            $moduleArray = $this->formatModule($module);
+            $user = Auth::user();
             
-            // Add progress information if user is authenticated
-            if ($user) {
-                $progress = ModuleProgress::where('user_id', $user->id)
-                    ->where('module_id', $module->id)
-                    ->first();
+            $formattedModules = $modules->map(function($module) use ($user) {
+                $moduleArray = $this->formatModule($module);
                 
-                $hasCertificate = Certificate::where('user_id', $user->id)
-                    ->where('module_id', $module->id)
-                    ->exists();
-                
-                $hasPassedQuiz = false;
-                if ($module->quiz) {
-                    $hasPassedQuiz = QuizAttempt::where('user_id', $user->id)
-                        ->where('quiz_id', $module->quiz->id)
-                        ->where('passed', true)
+                // Add progress information if user is authenticated
+                if ($user) {
+                    $progress = ModuleProgress::where('user_id', $user->id)
+                        ->where('module_id', $module->id)
+                        ->first();
+                    
+                    $hasCertificate = Certificate::where('user_id', $user->id)
+                        ->where('module_id', $module->id)
                         ->exists();
+                    
+                    $hasPassedQuiz = false;
+                    if ($module->quiz) {
+                        $hasPassedQuiz = QuizAttempt::where('user_id', $user->id)
+                            ->where('quiz_id', $module->quiz->id)
+                            ->where('passed', true)
+                            ->exists();
+                    }
+                    
+                    $isCompleted = ($progress && $progress->completed_at) || $hasCertificate || $hasPassedQuiz;
+                    
+                    // Calculate progress percentage based on contents viewed
+                    $totalContents = $module->contents->count();
+                    $viewedContents = 0; // This could be enhanced with a content_viewed table
+                    $progressPercentage = $isCompleted ? 100 : ($totalContents > 0 ? ($viewedContents / $totalContents) * 100 : 0);
+                    
+                    $moduleArray['progress'] = [
+                        'is_completed' => $isCompleted,
+                        'has_certificate' => $hasCertificate,
+                        'has_passed_quiz' => $hasPassedQuiz,
+                        'completed_at' => $progress?->completed_at?->toISOString(),
+                        'progress_percentage' => $progressPercentage,
+                    ];
+                } else {
+                    $moduleArray['progress'] = null;
                 }
                 
-                $isCompleted = ($progress && $progress->completed_at) || $hasCertificate || $hasPassedQuiz;
-                
-                // Calculate progress percentage based on contents viewed
-                $totalContents = $module->contents->count();
-                $viewedContents = 0; // This could be enhanced with a content_viewed table
-                $progressPercentage = $isCompleted ? 100 : ($totalContents > 0 ? ($viewedContents / $totalContents) * 100 : 0);
-                
-                $moduleArray['progress'] = [
-                    'is_completed' => $isCompleted,
-                    'has_certificate' => $hasCertificate,
-                    'has_passed_quiz' => $hasPassedQuiz,
-                    'completed_at' => $progress?->completed_at?->toISOString(),
-                    'progress_percentage' => $progressPercentage,
-                ];
-            } else {
-                $moduleArray['progress'] = null;
-            }
-            
-            return $moduleArray;
-        });
+                return $moduleArray;
+            });
 
-        return response()->json($formattedModules);
+            return response()->json($formattedModules);
+        } catch (\Exception $e) {
+            \Log::error('Error fetching modules: ' . $e->getMessage());
+            return response()->json([
+                'error' => 'Failed to fetch modules',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function show($id)

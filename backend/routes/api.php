@@ -29,6 +29,9 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::get('/modules', [ModuleController::class, 'index']);
 Route::get('/modules/{id}', [ModuleController::class, 'show']);
 
+// Public Module Ratings (can be viewed without login)
+Route::get('/modules/{id}/ratings', [ModuleRatingController::class, 'getRatings']);
+
 // Public Profile (can be viewed without login) - using slug
 Route::get('/profile/{slug}', [ProfileController::class, 'getPublicProfile']);
 
@@ -49,8 +52,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Learning Modules (User) - Actions that require login
     Route::post('/modules/{id}/complete', [ModuleController::class, 'markComplete']);
 
-    // Module Ratings
-    Route::get('/modules/{id}/ratings', [ModuleRatingController::class, 'getRatings']);
+    // Module Ratings (require login for submit/delete)
     Route::post('/modules/{id}/ratings', [ModuleRatingController::class, 'submitRating']);
     Route::delete('/modules/{id}/ratings', [ModuleRatingController::class, 'deleteRating']);
     Route::delete('/modules/{id}/ratings/{ratingId}', [ModuleRatingController::class, 'deleteRatingById']);

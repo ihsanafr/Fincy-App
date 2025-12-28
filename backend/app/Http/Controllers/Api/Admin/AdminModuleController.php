@@ -26,7 +26,7 @@ class AdminModuleController extends Controller
     {
         $moduleArray = $module->toArray();
         if ($module->thumbnail) {
-            $moduleArray['thumbnail_url'] = asset('storage/' . $module->thumbnail);
+            $moduleArray['thumbnail_url'] = storage_url($module->thumbnail);
         }
         return $moduleArray;
     }

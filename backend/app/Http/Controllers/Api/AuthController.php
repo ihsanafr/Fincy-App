@@ -57,7 +57,7 @@ class AuthController extends Controller
 
         $userData = $user->toArray();
         if ($user->profile_photo) {
-            $userData['profile_photo'] = asset('storage/' . $user->profile_photo);
+            $userData['profile_photo'] = storage_url($user->profile_photo);
         }
         // Ensure banner_color is always present
         $userData['banner_color'] = $userData['banner_color'] ?? '#3b82f6';
@@ -87,7 +87,7 @@ class AuthController extends Controller
 
         $userData = $user->toArray();
         if ($user->profile_photo) {
-            $userData['profile_photo'] = asset('storage/' . $user->profile_photo);
+            $userData['profile_photo'] = storage_url($user->profile_photo);
         }
         // Ensure banner_color is always present
         $userData['banner_color'] = $userData['banner_color'] ?? '#3b82f6';
@@ -112,7 +112,7 @@ class AuthController extends Controller
         
         // Add full URL for profile photo
         if ($user->profile_photo) {
-            $userData['profile_photo'] = asset('storage/' . $user->profile_photo);
+            $userData['profile_photo'] = storage_url($user->profile_photo);
         }
         // Ensure banner_color is always present
         $userData['banner_color'] = $userData['banner_color'] ?? '#3b82f6';

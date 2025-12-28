@@ -42,7 +42,7 @@ class ProfileController extends Controller
         $user->save();
 
         // Get full URL for the uploaded photo
-        $photoUrl = asset('storage/' . $filename);
+        $photoUrl = storage_url($filename);
 
         return response()->json([
             'message' => 'Profile photo uploaded successfully',
@@ -91,7 +91,7 @@ class ProfileController extends Controller
                 'email' => $user->email,
                 'slug' => $user->slug,
                 'banner_color' => $user->banner_color,
-                'profile_photo' => $user->profile_photo ? asset('storage/' . $user->profile_photo) : null,
+                'profile_photo' => storage_url($user->profile_photo),
                 'created_at' => $user->created_at,
             ],
         ]);
@@ -131,7 +131,7 @@ class ProfileController extends Controller
                 'email' => $user->email,
                 'slug' => $user->slug,
                 'banner_color' => $user->banner_color ?? '#3b82f6',
-                'profile_photo' => $user->profile_photo ? asset('storage/' . $user->profile_photo) : null,
+                'profile_photo' => storage_url($user->profile_photo),
                 'created_at' => $user->created_at,
             ],
             'portfolio' => [
@@ -213,7 +213,7 @@ class ProfileController extends Controller
                 'name' => $user->name,
                 'slug' => $user->slug,
                 'banner_color' => $user->banner_color ?? '#3b82f6',
-                'profile_photo' => $user->profile_photo ? asset('storage/' . $user->profile_photo) : null,
+                'profile_photo' => storage_url($user->profile_photo),
                 'created_at' => $user->created_at,
             ],
             'portfolio' => [
