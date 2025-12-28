@@ -41,7 +41,7 @@ class FinanceToolsController extends Controller
         if ($activeSubscription) {
             $subscriptionData = $activeSubscription->toArray();
             if (!empty($activeSubscription->payment_proof)) {
-                $subscriptionData['payment_proof_url'] = asset('storage/' . $activeSubscription->payment_proof);
+                $subscriptionData['payment_proof_url'] = storage_url($activeSubscription->payment_proof);
             } else {
                 $subscriptionData['payment_proof_url'] = null;
             }

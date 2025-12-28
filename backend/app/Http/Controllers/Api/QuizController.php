@@ -376,7 +376,7 @@ class QuizController extends Controller
         $user = $certificate->user;
         $userData = $user->toArray();
         if ($user->profile_photo) {
-            $userData['profile_photo'] = asset('storage/' . $user->profile_photo);
+            $userData['profile_photo'] = storage_url($user->profile_photo);
         } else {
             $userData['profile_photo'] = null;
         }
