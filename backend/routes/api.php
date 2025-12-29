@@ -16,9 +16,8 @@ use App\Http\Controllers\Api\Admin\AdminPaymentController;
 use App\Http\Controllers\Api\Admin\AdminUserController;
 use App\Http\Controllers\Api\Admin\AdminDashboardController;
 use App\Http\Controllers\Api\Admin\AdminContentController;
-use App\Http\Controllers\Api\AchievementController;
 use App\Http\Controllers\Api\ModuleRatingController;
-use App\Http\Controllers\Api\ModuleBookmarkController;
+// use App\Http\Controllers\Api\ModuleBookmarkController;
 use Illuminate\Support\Facades\Route;
 
 // Public routes
@@ -58,9 +57,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/modules/{id}/ratings/{ratingId}', [ModuleRatingController::class, 'deleteRatingById']);
 
     // Module Bookmarks
-    Route::post('/modules/{id}/bookmark', [ModuleBookmarkController::class, 'toggleBookmark']);
-    Route::get('/modules/{id}/bookmark', [ModuleBookmarkController::class, 'checkBookmark']);
-    Route::get('/bookmarks', [ModuleBookmarkController::class, 'getBookmarks']);
+    // Route::post('/modules/{id}/bookmark', [ModuleBookmarkController::class, 'toggleBookmark']);
+    // Route::get('/modules/{id}/bookmark', [ModuleBookmarkController::class, 'checkBookmark']);
+    // Route::get('/bookmarks', [ModuleBookmarkController::class, 'getBookmarks']);
 
     // Quiz
     Route::get('/modules/{id}/quiz', [QuizController::class, 'getQuiz']);
@@ -70,11 +69,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/modules/{id}/quiz/history', [QuizController::class, 'getModuleQuizHistory']);
     Route::get('/quiz/history', [QuizController::class, 'getQuizHistory']);
     Route::get('/quiz/attempts/{id}', [QuizController::class, 'getQuizAttemptDetails']);
-
-    // Achievements
-    Route::get('/achievements', [AchievementController::class, 'getUserAchievements']);
-    Route::post('/achievements/check', [AchievementController::class, 'checkAndUnlockAchievements']);
-    Route::post('/achievements/update-streak', [AchievementController::class, 'updateLearningStreak']);
 
         // Finance Tools
         Route::get('/finance-tools/status', [FinanceToolsController::class, 'checkStatus']);
@@ -149,5 +143,4 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/content/upload-image', [AdminContentController::class, 'uploadImage']);
     });
 });
-
 

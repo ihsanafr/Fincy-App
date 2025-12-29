@@ -54,8 +54,14 @@ class Certificate extends Model
             $this->public_share_token = self::generateShareToken();
             $this->save();
         }
-        // Use frontend URL instead of backend URL
-        $frontendUrl = config('app.frontend_url', 'http://localhost:3000');
+        
+        // Use frontend URL from environment variable or config
+        // Fallback to APP_URL if FRONTEND_URL is not set (for backward compatibility)
+        $frontendUrl = env('FRONTEND_URL', config('app.frontend_url', config('app.url')));
+        
+        // Remove trailing slash
+        $frontendUrl = rtrim($frontendUrl, '/');
+        
         return "{$frontendUrl}/certificate/public/{$this->public_share_token}";
     }
 }

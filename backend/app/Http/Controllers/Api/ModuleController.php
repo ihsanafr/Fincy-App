@@ -18,6 +18,7 @@ use App\Models\ModuleRating;
 use App\Models\ModuleBookmark;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class ModuleController extends Controller
 {
@@ -30,6 +31,17 @@ class ModuleController extends Controller
         if ($module->thumbnail) {
             $moduleArray['thumbnail_url'] = storage_url($module->thumbnail);
         }
+        
+        // Fix URLs in module contents (gambar di dalam konten HTML)
+        if (isset($moduleArray['contents']) && is_array($moduleArray['contents'])) {
+            $moduleArray['contents'] = array_map(function($content) {
+                if (isset($content['content']) && !empty($content['content'])) {
+                    $content['content'] = fix_content_urls($content['content']);
+                }
+                return $content;
+            }, $moduleArray['contents']);
+        }
+        
         return $moduleArray;
     }
 
@@ -89,7 +101,7 @@ class ModuleController extends Controller
 
             return response()->json($formattedModules);
         } catch (\Exception $e) {
-            \Log::error('Error fetching modules: ' . $e->getMessage());
+            Log::error('Error fetching modules: ' . $e->getMessage());
             return response()->json([
                 'error' => 'Failed to fetch modules',
                 'message' => $e->getMessage()
@@ -166,10 +178,8 @@ class ModuleController extends Controller
         if (!$progress->completed_at) {
             $progress->update(['completed_at' => now()]);
             
-            // Update learning streak and check achievements
-            $achievementController = new AchievementController();
-            $achievementController->updateLearningStreak();
-            $achievementController->checkAndUnlockAchievements();
+            // Achievement feature is currently disabled
+            // TODO: Re-implement achievement system if needed
         }
 
         return response()->json([
