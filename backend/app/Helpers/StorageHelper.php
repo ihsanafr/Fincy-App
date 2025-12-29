@@ -37,3 +37,50 @@ if (!function_exists('storage_url')) {
     }
 }
 
+if (!function_exists('fix_content_urls')) {
+    /**
+     * Memperbaiki URL gambar di dalam konten HTML
+     * Mengganti URL localhost dengan URL domain yang benar
+     * 
+     * @param string|null $content Konten HTML
+     * @return string|null Konten HTML dengan URL yang sudah diperbaiki
+     */
+    function fix_content_urls($content)
+    {
+        if (empty($content)) {
+            return $content;
+        }
+
+        $appUrl = rtrim(config('app.url'), '/');
+        
+        // Pattern untuk mencari URL localhost dengan berbagai variasi
+        // Mencari di dalam atribut src, href, atau di dalam tag
+        $patterns = [
+            // http://localhost:8000/storage/...
+            '/(["\']?)http:\/\/localhost:8000\/storage\/([^\s"\'<>\)]+)(["\']?)/i',
+            // https://localhost:8000/storage/...
+            '/(["\']?)https:\/\/localhost:8000\/storage\/([^\s"\'<>\)]+)(["\']?)/i',
+            // http://127.0.0.1:8000/storage/...
+            '/(["\']?)http:\/\/127\.0\.0\.1:8000\/storage\/([^\s"\'<>\)]+)(["\']?)/i',
+            // https://127.0.0.1:8000/storage/...
+            '/(["\']?)https:\/\/127\.0\.0\.1:8000\/storage\/([^\s"\'<>\)]+)(["\']?)/i',
+        ];
+
+        foreach ($patterns as $pattern) {
+            $content = preg_replace_callback($pattern, function($matches) use ($appUrl) {
+                $quoteBefore = $matches[1] ?? '';
+                $path = $matches[2] ?? '';
+                $quoteAfter = $matches[3] ?? '';
+                
+                // Hapus query string atau fragment jika ada
+                $path = preg_split('/[?#]/', $path)[0];
+                
+                $fixedUrl = storage_url($path);
+                return $quoteBefore . $fixedUrl . $quoteAfter;
+            }, $content);
+        }
+
+        return $content;
+    }
+}
+

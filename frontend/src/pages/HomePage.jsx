@@ -89,7 +89,7 @@ function HomePage() {
             <ScrollReveal direction="up" delay={100}>
               <div className="text-center group cursor-default">
                 <div className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-brand-600 to-purple-600 bg-clip-text text-transparent mb-2 transition-all duration-300 group-hover:scale-110 inline-block">
-                  <CounterAnimation end={500} suffix="+" />
+                  <CounterAnimation end={50} suffix="+" />
                 </div>
                 <div className="text-sm text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">{t.activeLearners}</div>
               </div>
@@ -97,7 +97,7 @@ function HomePage() {
             <ScrollReveal direction="up" delay={200}>
               <div className="text-center group cursor-default">
                 <div className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2 transition-all duration-300 group-hover:scale-110 inline-block">
-                  <CounterAnimation end={50} suffix="+" />
+                  <CounterAnimation end={20} suffix="+" />
                 </div>
                 <div className="text-sm text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">{t.learningModules}</div>
               </div>
@@ -105,7 +105,7 @@ function HomePage() {
             <ScrollReveal direction="up" delay={300}>
               <div className="text-center group cursor-default">
                 <div className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-brand-600 to-blue-600 bg-clip-text text-transparent mb-2 transition-all duration-300 group-hover:scale-110 inline-block">
-                  <CounterAnimation end={1000} suffix="+" />
+                  <CounterAnimation end={50} suffix="+" />
                 </div>
                 <div className="text-sm text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">{t.certificatesIssued}</div>
               </div>
@@ -278,52 +278,28 @@ function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 items-stretch">
             {[
               {
-                name: 'Sarah Johnson',
-                role: 'Entrepreneur',
-                image: '👩‍💼',
+                name: 'Mirza Ahsan',
+                role: 'UI UX Designer',
+                image: '👨‍💻',
                 rating: 5,
-                text: 'Fincy has completely changed how I manage my finances. The learning modules are comprehensive and the finance tools help me track my expenses effortlessly. Highly recommended!',
+                text: 'Fincy sangat membantu saya mengatur arus keuangan pribadi dengan lebih terstruktur. Sebagai software engineer yang sering menangani banyak proyek, fitur–fitur Fincy membuat saya lebih mudah memantau pemasukan, pengeluaran, dan membuat rencana finansial yang jelas. Literasi finansial saya meningkat pesat berkat aplikasi ini.',
                 gradient: 'from-blue-500 to-cyan-500',
               },
               {
-                name: 'Michael Chen',
-                role: 'Student',
+                name: 'Arkan Faiz',
+                role: 'High School Student',
                 image: '👨‍🎓',
                 rating: 5,
-                text: 'As a student, I needed to learn about personal finance. Fincy\'s modules are easy to understand and the certificates I earned have been great additions to my resume.',
+                text: 'Sebagai pelajar, Fincy membuat saya lebih paham cara mengatur uang jajan dan tabungan. Aplikasinya sederhana, mudah dipakai, dan membantu saya membangun kebiasaan finansial yang lebih disiplin. Sekarang saya bisa mengelola uang dengan lebih bijak.',
                 gradient: 'from-purple-500 to-pink-500',
               },
               {
-                name: 'Emily Rodriguez',
-                role: 'Freelancer',
-                image: '👩‍💻',
+                name: 'Nikki Hara',
+                role: 'Product Design at a Startup',
+                image: '👩‍💼',
                 rating: 5,
-                text: 'The finance tools are a game-changer! I can now track my income and expenses properly. The budgeting features help me plan better for my freelance projects.',
+                text: 'Fincy membantu saya memahami pola pengeluaran dan mengambil keputusan finansial harian dengan lebih tepat. Fitur edukasi finansialnya jelas dan langsung terasa manfaatnya. Sangat cocok untuk pekerja startup yang butuh pengelolaan uang yang praktis dan efektif.',
                 gradient: 'from-orange-500 to-red-500',
-              },
-              {
-                name: 'David Kim',
-                role: 'Business Owner',
-                image: '👨‍💼',
-                rating: 5,
-                text: 'Excellent platform for financial education. The quizzes are challenging but fair, and the certificates are professionally designed. Worth every minute spent learning!',
-                gradient: 'from-green-500 to-emerald-500',
-              },
-              {
-                name: 'Lisa Anderson',
-                role: 'Parent',
-                image: '👩',
-                rating: 5,
-                text: 'I wanted to teach my kids about money management. Fincy provided me with the knowledge I needed, and now I can guide them better. Thank you Fincy!',
-                gradient: 'from-indigo-500 to-blue-500',
-              },
-              {
-                name: 'James Wilson',
-                role: 'Retiree',
-                image: '👨',
-                rating: 5,
-                text: 'Even at my age, I found Fincy\'s modules very helpful. The platform is user-friendly and the content is relevant. It\'s never too late to learn about finances!',
-                gradient: 'from-pink-500 to-rose-500',
               },
             ].map((testimonial, index) => (
               <ScrollReveal key={index} direction="scale" delay={index * 100}>

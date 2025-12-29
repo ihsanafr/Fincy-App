@@ -15,10 +15,10 @@ use App\Models\QuizAttempt;
 use App\Models\QuizAnswer;
 use App\Models\Certificate;
 use App\Models\ModuleProgress;
-use App\Http\Controllers\Api\AchievementController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class QuizController extends Controller
 {
@@ -195,17 +195,8 @@ class QuizController extends Controller
                 ];
             }
 
-            // Update learning streak and check achievements (outside transaction, don't fail quiz if this fails)
-            if ($passed) {
-                try {
-                    $achievementController = new AchievementController();
-                    $achievementController->updateLearningStreak();
-                    $achievementController->checkAndUnlockAchievements();
-                } catch (\Exception $e) {
-                    // Log error but don't fail the quiz submission
-                    \Log::error('Failed to update achievements after quiz submission: ' . $e->getMessage());
-                }
-            }
+            // Achievement feature is currently disabled
+            // TODO: Re-implement achievement system if needed
 
             // Ensure all data is JSON-safe
             $responseData = [
@@ -221,8 +212,8 @@ class QuizController extends Controller
             // Validate JSON encoding before sending
             $jsonTest = json_encode($responseData);
             if ($jsonTest === false) {
-                \Log::error('JSON encoding failed: ' . json_last_error_msg());
-                \Log::error('Data: ' . print_r($responseData, true));
+                Log::error('JSON encoding failed: ' . json_last_error_msg());
+                Log::error('Data: ' . print_r($responseData, true));
                 return response()->json([
                     'message' => 'Error processing quiz results',
                     'error' => 'Data encoding error'
@@ -232,8 +223,8 @@ class QuizController extends Controller
             return response()->json($responseData);
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Quiz submission failed: ' . $e->getMessage());
-            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            Log::error('Quiz submission failed: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
             return response()->json([
                 'message' => 'Failed to submit quiz',
                 'error' => config('app.debug') ? $e->getMessage() : null

@@ -65,11 +65,17 @@ function Footer() {
               {language === 'id' ? 'Kontak' : 'Contact'}
             </h3>
             <ul className="space-y-3">
-              <li className="text-sm text-gray-600 dark:text-gray-400">
-                Email: info@fincy.app
+              <li className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-2">
+                <span>Email: info@fincy.app</span>
+                <span className="px-2 py-0.5 text-xs font-medium bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded">
+                  {language === 'id' ? 'Dummy' : 'Dummy'}
+                </span>
               </li>
-              <li className="text-sm text-gray-600 dark:text-gray-400">
-                Support: support@fincy.app
+              <li className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-2">
+                <span>Support: support@fincy.app</span>
+                <span className="px-2 py-0.5 text-xs font-medium bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded">
+                  {language === 'id' ? 'Dummy' : 'Dummy'}
+                </span>
               </li>
             </ul>
           </div>

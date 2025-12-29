@@ -2,10 +2,11 @@
 
 <div align="center">
 
-<img src="./fincy-thumbnail.png" alt="Fincy - Financial Literacy Platform" width="100%">
+<img src="./fincy-thumbnail.png" alt="Fincy - Financial Literacy Platform" width="800">
 
 **Empowering everyone with financial knowledge and tools**
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Available-success?style=flat-square)](https://fincy.ihsanafr.my.id)
 [![Laravel](https://img.shields.io/badge/Laravel-11-FF2D20?style=flat-square&logo=laravel&logoColor=white)](https://laravel.com)
 [![React](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=white)](https://reactjs.org)
 [![Vite](https://img.shields.io/badge/Vite-5-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev)
@@ -127,7 +128,6 @@ php artisan migrate
 
 # Seed database with initial data
 php artisan db:seed --class=SuperAdminSeeder
-php artisan db:seed --class=EducatorSeeder
 php artisan db:seed --class=DefaultCategoriesSeeder
 
 # Create storage link for file uploads
@@ -143,9 +143,7 @@ Backend will run at `http://localhost:8000`
 - Email: `admin@fincy.com`
 - Password: `admin123`
 
-**Default Educator Credentials:**
-- Email: `educator@fincy.com`
-- Password: `educator123`
+> **Note:** Educator accounts can be created through the admin panel after logging in as super admin.
 
 ### 3. Frontend Setup
 
@@ -353,51 +351,10 @@ cd frontend
 npm test
 ```
 
-## 🤝 Contributing
-
-Contributions are welcome! Please follow these steps:
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'feat: Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-### Contribution Guidelines
-- Follow the existing code style
-- Add comments for complex logic
-- Update documentation as needed
-- Test your changes thoroughly
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 ## 👥 Authors
 
-- **Fincy Team** - *Initial work*
+- **Ihsan Ahmad Fakhriansyah**
 
-## 🙏 Acknowledgments
-
-- Laravel community for the excellent framework
-- React team for the powerful UI library
-- All contributors and users of Fincy
-
-## 📞 Support
-
-For support, email support@fincy.com or open an issue in the GitHub repository.
-
-## 🔮 Roadmap
-
-- [ ] Mobile app (React Native)
-- [ ] Advanced analytics and insights
-- [ ] Social features and community
-- [ ] Integration with banking APIs
-- [ ] AI-powered financial recommendations
-- [ ] Multi-currency support
-- [ ] Export reports to PDF/Excel
-
----
 
 <div align="center">
 
