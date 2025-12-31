@@ -19,7 +19,17 @@ class AdminPaymentController extends Controller
     {
         $subscriptions = Subscription::with('user')
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->get()
+            ->map(function($subscription) {
+                $subscriptionArray = $subscription->toArray();
+                // Format payment proof URL
+                if (!empty($subscription->payment_proof)) {
+                    $subscriptionArray['payment_proof_url'] = storage_url($subscription->payment_proof);
+                } else {
+                    $subscriptionArray['payment_proof_url'] = null;
+                }
+                return $subscriptionArray;
+            });
 
         return response()->json($subscriptions);
     }
@@ -37,9 +47,17 @@ class AdminPaymentController extends Controller
             'approved_at' => now(),
         ]);
 
+        $subscription->load('user');
+        $subscriptionArray = $subscription->toArray();
+        if (!empty($subscription->payment_proof)) {
+            $subscriptionArray['payment_proof_url'] = storage_url($subscription->payment_proof);
+        } else {
+            $subscriptionArray['payment_proof_url'] = null;
+        }
+
         return response()->json([
             'message' => 'Subscription approved successfully',
-            'subscription' => $subscription->load('user'),
+            'subscription' => $subscriptionArray,
         ]);
     }
 
@@ -61,9 +79,17 @@ class AdminPaymentController extends Controller
             'notes' => $request->notes,
         ]);
 
+        $subscription->load('user');
+        $subscriptionArray = $subscription->toArray();
+        if (!empty($subscription->payment_proof)) {
+            $subscriptionArray['payment_proof_url'] = storage_url($subscription->payment_proof);
+        } else {
+            $subscriptionArray['payment_proof_url'] = null;
+        }
+
         return response()->json([
             'message' => 'Subscription rejected',
-            'subscription' => $subscription->load('user'),
+            'subscription' => $subscriptionArray,
         ]);
     }
 

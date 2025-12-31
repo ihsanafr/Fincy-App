@@ -323,9 +323,9 @@ function AdminPayments() {
                       {formatDate(payment.created_at)}
                     </TableCell>
                     <TableCell className="px-6 py-4 whitespace-nowrap">
-                      {payment.payment_proof ? (
+                      {payment.payment_proof_url ? (
                         <a
-                          href={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/storage/${payment.payment_proof}`}
+                          href={payment.payment_proof_url}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="p-2 text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-500/10 rounded-lg transition-all duration-200 inline-block"
